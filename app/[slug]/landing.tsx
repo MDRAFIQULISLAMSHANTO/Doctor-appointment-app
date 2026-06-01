@@ -651,7 +651,7 @@ export default function DoctorLanding({ doc, brand, brandLight }: Props) {
               ...(doc.address ? [{ Icon: MapPin, label: "Location", value: [doc.address, doc.city].filter(Boolean).join(", ") }] : []),
               ...(doc.hours ? [{ Icon: Clock, label: "Hours", value: "Check schedule above" }] : []),
               ...(doc.phone ? [{ Icon: Phone, label: "Phone", value: doc.phone }] : []),
-              { Icon: Mail, label: "Book online", value: `docapp.com/${doc.slug}` },
+              { Icon: Mail, label: "Book online", value: `bookmydoc.online/${doc.slug}` },
             ].map(({ Icon, label, value }) => (
               <div key={label} className="flex flex-col gap-3">
                 <div className="flex items-center gap-2">
@@ -671,7 +671,7 @@ export default function DoctorLanding({ doc, brand, brandLight }: Props) {
               <span className="text-[13px] text-[#f6f3f1]/80" style={SERIF}>{doc.name}</span>
             </div>
             <p className="text-[11px] text-[#f6f3f1]/40 tracking-[0.05em] uppercase text-center" style={MONO}>
-              © 2026 {doc.name} · Powered by DocApp
+              © 2026 {doc.name} · Powered by BookMyDoc
             </p>
             <div className="flex gap-5">
               {["Privacy", "Terms"].map((link) => (

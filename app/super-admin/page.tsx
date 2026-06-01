@@ -292,7 +292,7 @@ export default function SuperAdmin() {
           </div>
           <div>
             <p className="font-bold text-sm">Super Admin</p>
-            <p className="text-white/40 text-[10px]">Doctor SaaS Platform</p>
+            <p className="text-white/40 text-[10px]">BookMyDoc Platform</p>
           </div>
         </div>
         <div className="flex items-center gap-3">

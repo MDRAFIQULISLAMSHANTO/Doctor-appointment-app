@@ -57,7 +57,7 @@ export default function SuperAdminLogin() {
             </svg>
           </div>
           <h1 className="text-xl font-bold text-white">Super Admin</h1>
-          <p className="text-white/40 text-sm mt-1">DocApp Platform Control</p>
+          <p className="text-white/40 text-sm mt-1">BookMyDoc Platform Control</p>
         </div>
 
         {/* Google OAuth */}

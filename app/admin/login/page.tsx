@@ -40,7 +40,7 @@ export default function AdminLogin() {
           <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
           </div>
-          <span className="text-white font-bold">Doctor SaaS</span>
+          <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, color: "white" }}>Book<span style={{ color: "#14967F" }}>My</span>Doc</span>
         </Link>
         <div className="relative z-10">
           <h2 className="text-4xl font-bold text-white mb-4 leading-tight">Doctor<br/>Dashboard</h2>
@@ -56,7 +56,7 @@ export default function AdminLogin() {
             ))}
           </div>
         </div>
-        <p className="text-white/20 text-xs relative z-10">Doctor SaaS Platform</p>
+        <p className="text-white/20 text-xs relative z-10">BookMyDoc Platform</p>
       </div>
 
       <div className="flex-1 flex items-center justify-center p-5">
@@ -65,7 +65,7 @@ export default function AdminLogin() {
             <div className="w-8 h-8 rounded-lg bg-[#191919] flex items-center justify-center">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
             </div>
-            <span className="font-bold text-[#191919]">Doctor SaaS</span>
+            <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, color: "#191919" }}>Book<span style={{ color: "#14967F" }}>My</span>Doc</span>
           </Link>
 
           <div className="bg-white rounded-3xl p-8 shadow-sm">

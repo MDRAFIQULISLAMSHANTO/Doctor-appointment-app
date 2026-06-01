@@ -154,7 +154,7 @@ export default function PatientDashboard() {
             <div className="w-8 h-8 rounded-lg bg-[#14967F] flex items-center justify-center">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
             </div>
-            <span className="font-bold text-[#242424] text-sm">DocApp</span>
+            <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 14, color: "#242424" }}>Book<span style={{ color: "#14967F" }}>My</span>Doc</span>
           </Link>
         </div>
         <div className="flex-1 px-3 py-4">

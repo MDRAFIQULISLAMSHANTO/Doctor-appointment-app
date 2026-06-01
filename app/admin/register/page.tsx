@@ -76,7 +76,7 @@ export default function DoctorRegister() {
           <div className="w-9 h-9 rounded-xl bg-[#191919] flex items-center justify-center">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
           </div>
-          <span className="font-bold text-[#191919]">Doctor SaaS — Register Your Clinic</span>
+          <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, color: "#191919" }}>Book<span style={{ color: "#14967F" }}>My</span>Doc — Register Your Clinic</span>
         </Link>
 
         <div className="bg-white rounded-3xl p-8 shadow-sm">

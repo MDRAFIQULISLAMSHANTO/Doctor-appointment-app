@@ -130,7 +130,7 @@ export default function PatientDashboard() {
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
             </div>
             <div>
-              <p className="font-bold text-[#191919] text-xs">{doctor?.name ?? "DocApp"}</p>
+              <p className="font-bold text-[#191919] text-xs">{doctor?.name ?? "BookMyDoc"}</p>
               <p className="text-[10px] text-[#A3A3A3]">{doctor?.specialty ?? ""}</p>
             </div>
           </Link>

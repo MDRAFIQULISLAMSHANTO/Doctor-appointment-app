@@ -55,7 +55,7 @@ function Nav() {
           <div className="grid h-7 w-7 place-items-center rounded-full bg-[#242424] text-[#f6f3f1]">
             <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
           </div>
-          <span className="text-[18px]" style={serif}>DocApp</span>
+          <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 18 }}>Book<span style={{ color: "#14967F" }}>My</span>Doc</span>
         </Link>
         <nav className="hidden items-center gap-1 md:flex" style={mono}>
           {[
@@ -86,10 +86,10 @@ function Nav() {
 function HeroScheduleMock() {
   const slots = [
     { t: "09:00", name: "Sarah Johnson", note: "Consultation · 30m", tone: "mint" },
-    { t: "09:45", name: "Md. Karim", note: "Follow-up · 20m", tone: "sky" },
+    { t: "09:45", name: "James Mitchell", note: "Follow-up · 20m", tone: "sky" },
     { t: "10:30", name: "—", note: "Buffer", tone: "muted" },
-    { t: "11:00", name: "Fatema Akter", note: "Check-up · 45m", tone: "peach" },
-    { t: "13:15", name: "Sabbir Ahmed", note: "Consultation · 30m", tone: "sky" },
+    { t: "11:00", name: "Emily Clarke", note: "Check-up · 45m", tone: "peach" },
+    { t: "13:15", name: "Omar Hassan", note: "Consultation · 30m", tone: "sky" },
   ];
   const tones: Record<string, string> = {
     mint: "bg-[#a7fccd]",
@@ -143,7 +143,7 @@ function HeroScheduleMock() {
             <Check className="h-3.5 w-3.5" />
           </div>
           <div>
-            <div>Fatema confirmed</div>
+            <div>Emily confirmed</div>
             <div className="text-[#797776]">2 minutes ago</div>
           </div>
         </div>
@@ -168,7 +168,7 @@ function Hero() {
       <div className="mx-auto grid max-w-[1432px] grid-cols-1 gap-12 px-6 pb-24 pt-16 lg:grid-cols-12 lg:gap-10 lg:pb-32 lg:pt-24">
         <div className="lg:col-span-7">
           <Tag>
-            <Sparkles className="h-3 w-3" /> Built for Bangladeshi doctors
+            <Sparkles className="h-3 w-3" /> Built for independent practices worldwide
           </Tag>
           <h1 className="mt-6 text-[44px] leading-[1.05] text-black sm:text-[64px] lg:text-[78px]" style={serif}>
             Your entire practice,
@@ -176,7 +176,7 @@ function Hero() {
             <span className="italic text-[#4e4d4d]">online</span> in minutes.
           </h1>
           <p className="mt-6 max-w-xl text-[16px] text-[#4e4d4d]" style={sans}>
-            DocApp gives every doctor their own patient portal — appointment booking,
+            BookMyDoc gives every doctor their own patient portal — appointment booking,
             digital prescriptions, patient records, and a branded landing page.
             No receptionist needed.
           </p>
@@ -205,18 +205,18 @@ function Hero() {
 
 function LogoStrip() {
   const names = [
-    "Chittagong Medical",
-    "Dhaka City Clinic",
-    "Dr. Rahman Practice",
-    "Sylhet Family Med",
-    "Comilla Health Hub",
-    "Khulna Specialist",
+    "London Family Clinic",
+    "NYC Health Partners",
+    "Toronto Med Centre",
+    "Sydney Specialist",
+    "Dubai Health Hub",
+    "Berlin Clinic",
   ];
   return (
     <section className="border-y border-black/10 bg-[#f6f3f1]">
       <div className="mx-auto max-w-[1432px] px-6 py-8">
         <p className="text-center text-[12px] uppercase text-[#797776]" style={{ ...mono, letterSpacing: "0.08em" }}>
-          Trusted by independent practices across Bangladesh
+          Trusted by independent practices worldwide
         </p>
         <div className="mt-5 grid grid-cols-2 items-center gap-y-4 text-center sm:grid-cols-3 lg:grid-cols-6">
           {names.map((l) => (
@@ -297,7 +297,7 @@ function SplitBlock() {
             </h2>
             <p className="mt-5 max-w-md text-[15px] text-[#3d3d3d]" style={sans}>
               Set your schedule per day of the week, block holidays, and control slot duration.
-              DocApp hides unavailable times. No double-bookings, no confusion.
+              BookMyDoc hides unavailable times. No double-bookings, no confusion.
             </p>
             <ul className="mt-7 space-y-3">
               {[
@@ -387,7 +387,7 @@ function Stats() {
     { k: "100%", v: "free to start — no credit card" },
     { k: "10m", v: "average setup time, end to end" },
     { k: "24/7", v: "patient self-booking, even at night" },
-    { k: "৳0", v: "owed to a receptionist agency" },
+    { k: "$0", v: "owed to a receptionist agency" },
   ];
   return (
     <section className="bg-[#242424] text-[#f6f3f1]">
@@ -409,18 +409,18 @@ function Testimonials() {
   const quotes = [
     {
       q: "I used to spend 2 hours a day on phone calls for appointments. Now patients book themselves, I get serial numbers in order, and my day actually flows.",
-      n: "Dr. Kamrul Islam",
-      r: "General Practice · Dhaka",
+      n: "Dr. Michael Reeves",
+      r: "General Practice · London",
     },
     {
       q: "The digital prescription feature is a game-changer. Patients get their prescription on their phone. No more lost papers, no more repeat calls.",
-      n: "Dr. Nasrin Sultana",
-      r: "Pediatrician · Chittagong",
+      n: "Dr. Priya Nair",
+      r: "Pediatrician · Toronto",
     },
     {
-      q: "I gave patients a portal link instead of my personal number. My evenings are my own again. DocApp genuinely changed how I practice.",
-      n: "Dr. Rezaul Haque",
-      r: "Internal Medicine · Sylhet",
+      q: "I gave patients a portal link instead of my personal number. My evenings are my own again. BookMyDoc genuinely changed how I practice.",
+      n: "Dr. Carlos Mendez",
+      r: "Internal Medicine · Sydney",
     },
   ];
   return (
@@ -459,7 +459,7 @@ function Pricing() {
   const tiers = [
     {
       name: "Free",
-      price: "৳0",
+      price: "$0",
       tag: "Forever free to start",
       features: [
         "30 appointments / month",
@@ -473,7 +473,7 @@ function Pricing() {
     },
     {
       name: "Starter",
-      price: "৳500",
+      price: "$9",
       tag: "Most chosen by doctors",
       features: [
         "200 appointments / month",
@@ -487,7 +487,7 @@ function Pricing() {
     },
     {
       name: "Pro",
-      price: "৳1,500",
+      price: "$29",
       tag: "Full-featured practice",
       features: [
         "Unlimited appointments",
@@ -594,7 +594,7 @@ function FAQ() {
           </h2>
           <p className="mt-5 max-w-sm text-[15px] text-[#4e4d4d]" style={sans}>
             Can&apos;t find what you&apos;re looking for? Email us at{" "}
-            <span className="underline">support@docapp.com</span> — a real human responds.
+            <span className="underline">support@bookmydoc.online</span> — a real human responds.
           </p>
         </div>
         <div className="lg:col-span-8">
@@ -674,10 +674,10 @@ function Footer() {
               <div className="grid h-7 w-7 place-items-center rounded-full bg-[#242424] text-[#f6f3f1]">
                 <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
               </div>
-              <span className="text-[20px]" style={serif}>DocApp</span>
+              <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 20 }}>Book<span style={{ color: "#14967F" }}>My</span>Doc</span>
             </div>
             <p className="mt-4 max-w-xs text-[14px] text-[#4e4d4d]" style={sans}>
-              A smart appointment and patient management platform for independent doctors across Bangladesh.
+              A smart appointment and patient management platform for independent doctors worldwide.
             </p>
             <div className="mt-6 flex items-center gap-2 text-[12px] text-[#797776]" style={mono}>
               <Clock className="h-3.5 w-3.5" /> Support replies within 24 hours
@@ -697,7 +697,7 @@ function Footer() {
           ))}
         </div>
         <div className="mt-14 flex flex-col items-start justify-between gap-3 border-t border-black/10 pt-6 text-[12px] text-[#797776] sm:flex-row sm:items-center" style={mono}>
-          <span>© 2026 DocApp. All rights reserved.</span>
+          <span>© 2026 BookMyDoc. All rights reserved.</span>
           <div className="flex items-center gap-5">
             <a href="#" className="hover:text-black">Privacy</a>
             <a href="#" className="hover:text-black">Terms</a>

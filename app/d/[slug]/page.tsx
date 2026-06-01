@@ -30,8 +30,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { data } = await supabase.from("doctors").select("name, specialty, city").eq("slug", slug).eq("active", true).single();
   if (!data) return { title: "Doctor Not Found" };
   return {
-    title: `${data.name} — ${data.specialty} | DocApp`,
-    description: `Book an appointment with ${data.name}, ${data.specialty} in ${data.city ?? "Bangladesh"}.`,
+    title: `${data.name} — ${data.specialty} | BookMyDoc`,
+    description: `Book an appointment with ${data.name}, ${data.specialty}${data.city ? " in " + data.city : ""}.`,
   };
 }
 
@@ -278,14 +278,14 @@ export default async function DoctorPage({ params }: Props) {
               </Link>
             </div>
 
-            {/* Powered by DocApp */}
+            {/* Powered by BookMyDoc */}
             <div className="bg-[#191919] rounded-2xl p-4 text-center">
               <p className="text-white/40 text-[10px] mb-1">Powered by</p>
               <div className="flex items-center justify-center gap-1.5">
                 <div className="w-5 h-5 rounded bg-[#14967F] flex items-center justify-center">
                   <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
                 </div>
-                <span className="text-white font-bold text-sm">DocApp</span>
+                <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 14, color: "white" }}>Book<span style={{ color: "#14967F" }}>My</span>Doc</span>
               </div>
               <Link href="/" className="text-[#14967F] text-[10px] mt-1 block hover:underline">Create your own portal →</Link>
             </div>

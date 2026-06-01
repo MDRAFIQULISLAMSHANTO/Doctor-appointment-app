@@ -217,7 +217,7 @@ export default function NewAppointmentPage() {
 </div>
 
 <div class="footer">
-  <div style="font-size:12px;color:#A3A3A3;">Powered by DocApp</div>
+  <div style="font-size:12px;color:#A3A3A3;">Powered by BookMyDoc</div>
   <div class="sign-line">${doctor?.name}<br/>Signature</div>
 </div>
 </body></html>`);

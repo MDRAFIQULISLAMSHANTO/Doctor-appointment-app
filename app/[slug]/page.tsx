@@ -20,8 +20,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { data } = await supabase.from("doctors").select("name, specialty, city").eq("slug", slug).eq("active", true).single();
   if (!data) return { title: "Doctor Not Found" };
   return {
-    title: `${data.name} — ${data.specialty} | DocApp`,
-    description: `Book an appointment with ${data.name}, ${data.specialty} in ${data.city ?? "Bangladesh"}.`,
+    title: `${data.name} — ${data.specialty} | BookMyDoc`,
+    description: `Book an appointment with ${data.name}, ${data.specialty}${data.city ? " in " + data.city : ""}.`,
   };
 }
 
