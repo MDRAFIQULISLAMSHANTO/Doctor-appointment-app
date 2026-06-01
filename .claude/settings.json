@@ -14,7 +14,9 @@
       "Bash(Remove-Item \"e:/shanto personal/Doctor-appoinment/doctor-app/middleware.ts\")",
       "Bash(ls \"e:\\\\shanto personal\\\\Doctor-appoinment\\\\\")",
       "Read(//e/shanto personal/**)",
-      "Read(//e//**)"
+      "Read(//e//**)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ],
     "additionalDirectories": [
       "e:\\shanto personal\\Doctor-appoinment\\doctor-app\\app\\d\\[slug]",
