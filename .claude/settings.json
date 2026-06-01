@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Recurse -Path \"e:\\\\shanto personal\\\\Doctor-appoinment\\\\doctor-app\\\\app\" -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Sort-Object)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "Bash(npx next *)",
+      "WebFetch(domain:github.com)",
+      "Bash(mkdir -p \"e:\\\\shanto personal\\\\Doctor-appoinment\\\\doctor-app\\\\app\\\\d\\\\[slug]\\\\book\" \"e:\\\\shanto personal\\\\Doctor-appoinment\\\\doctor-app\\\\app\\\\d\\\\[slug]\\\\patient\\\\login\" \"e:\\\\shanto personal\\\\Doctor-appoinment\\\\doctor-app\\\\app\\\\d\\\\[slug]\\\\patient\\\\register\" \"e:\\\\shanto personal\\\\Doctor-appoinment\\\\doctor-app\\\\app\\\\d\\\\[slug]\\\\patient\\\\dashboard\" 2>/dev/null; echo done)",
+      "Bash(mkdir -p \"e:\\\\shanto personal\\\\Doctor-appoinment\\\\doctor-app\\\\app\\\\[slug]\\\\appointment\" \"e:\\\\shanto personal\\\\Doctor-appoinment\\\\doctor-app\\\\app\\\\[slug]\\\\login\" \"e:\\\\shanto personal\\\\Doctor-appoinment\\\\doctor-app\\\\app\\\\[slug]\\\\register\" \"e:\\\\shanto personal\\\\Doctor-appoinment\\\\doctor-app\\\\app\\\\[slug]\\\\patient\\\\dashboard\" \"e:\\\\shanto personal\\\\Doctor-appoinment\\\\doctor-app\\\\app\\\\[slug]\\\\admin\" && echo done)",
+      "Bash(Remove-Item \"e:/shanto personal/Doctor-appoinment/doctor-app/middleware.ts\")",
+      "Bash(ls \"e:\\\\shanto personal\\\\Doctor-appoinment\\\\\")",
+      "Read(//e/shanto personal/**)",
+      "Read(//e//**)"
+    ],
+    "additionalDirectories": [
+      "e:\\shanto personal\\Doctor-appoinment\\doctor-app\\app\\d\\[slug]",
+      "e:\\shanto personal\\Doctor-appoinment\\doctor-app\\app\\[slug]",
+      "e:\\shanto personal\\Doctor-appoinment"
+    ]
+  }
+}

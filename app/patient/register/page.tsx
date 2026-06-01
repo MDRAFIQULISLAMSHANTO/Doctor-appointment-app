@@ -1,8 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import GoogleAuthButton from "@/components/GoogleAuthButton";
 
 function RegisterForm() {
   const router = useRouter();
@@ -39,16 +39,43 @@ function RegisterForm() {
     setStep(2);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs = validate2();
     if (Object.keys(errs).length) { setErrors(errs); return; }
     setLoading(true);
     setErrors({});
-    setTimeout(() => {
-      if (typeof window !== "undefined") localStorage.setItem("patient_auth", JSON.stringify({ phone: form.phone, name: form.name }));
-      router.push(redirect);
-    }, 1000);
+
+    const res = await fetch("/api/auth/patient/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        phone: form.phone,
+        name: form.name,
+        age: form.age,
+        gender: form.gender,
+        password: form.password,
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      setErrors({ confirm: data.error || "Registration failed" });
+      setLoading(false);
+      return;
+    }
+
+    // Auto-login after registration
+    const { createClient } = await import("@/lib/supabase/client");
+    const supabase = createClient();
+    const cleanedPhone = form.phone.replace(/\D/g, "");
+    await supabase.auth.signInWithPassword({
+      email: `${cleanedPhone}@patient.docapp.local`,
+      password: form.password,
+    });
+
+    router.push(redirect);
+    router.refresh();
   };
 
   return (
@@ -79,7 +106,13 @@ function RegisterForm() {
           {step === 1 && (
             <>
               <h1 className="text-2xl font-bold text-[#191919] mb-1">Create Account</h1>
-              <p className="text-[#6b7280] text-sm mb-6">Register with your mobile number to get started</p>
+              <p className="text-[#6b7280] text-sm mb-5">Register to book appointments and track your health.</p>
+              <GoogleAuthButton redirectTo={redirect} label="Sign up with Google" />
+              <div className="flex items-center gap-3 my-5">
+                <div className="flex-1 h-px bg-gray-200"/>
+                <span className="text-xs text-[#A3A3A3] font-medium">or register with phone</span>
+                <div className="flex-1 h-px bg-gray-200"/>
+              </div>
               <form onSubmit={handleNext} className="space-y-4">
                 <div>
                   <label className="block text-sm font-semibold text-[#191919] mb-1.5">Full Name *</label>

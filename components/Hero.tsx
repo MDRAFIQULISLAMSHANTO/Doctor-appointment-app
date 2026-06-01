@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { NextAvailableBadge } from "./NextAvailableBadge";
 
 export default function Hero() {
   return (
@@ -89,6 +90,9 @@ export default function Hero() {
                 <path d="M7 17L17 7M17 7H7M17 7v10" />
               </svg>
             </Link>
+          </div>
+          <div className="flex justify-center mt-4">
+            <NextAvailableBadge />
           </div>
         </div>
 
