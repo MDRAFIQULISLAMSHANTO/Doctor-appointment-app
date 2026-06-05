@@ -3,9 +3,8 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight, ArrowUpRight, Calendar, Check, ChevronDown,
-  Clock, Bell, CreditCard, Sparkles, Stethoscope,
+  Clock, Bell, CreditCard, Sparkles, Plus, Stethoscope,
 } from "lucide-react";
-import { Logo } from "@/components/Logo";
 
 const serif = { fontFamily: "'Noto Serif', ui-serif, Georgia, serif", letterSpacing: "-0.02em" };
 const mono = { fontFamily: "'IBM Plex Mono', ui-monospace, monospace" };
@@ -52,7 +51,12 @@ function Nav() {
   return (
     <header className="sticky top-0 z-30 border-b border-black/5 bg-[#f6f3f1]/80 backdrop-blur">
       <div className="mx-auto flex max-w-[1432px] items-center justify-between px-6 py-4">
-        <Link href="/"><Logo size={28} /></Link>
+        <Link href="/" className="flex items-center gap-2">
+          <div className="grid h-7 w-7 place-items-center rounded-full bg-[#242424] text-[#f6f3f1]">
+            <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+          </div>
+          <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 18 }}>Book<span style={{ color: "#14967F" }}>My</span>Doc</span>
+        </Link>
         <nav className="hidden items-center gap-1 md:flex" style={mono}>
           {[
             { label: "Features", href: "#features" },
@@ -666,7 +670,12 @@ function Footer() {
       <div className="mx-auto max-w-[1432px] px-6 py-16">
         <div className="grid grid-cols-2 gap-10 lg:grid-cols-6">
           <div className="col-span-2">
-            <Logo size={32} />
+            <div className="flex items-center gap-2">
+              <div className="grid h-7 w-7 place-items-center rounded-full bg-[#242424] text-[#f6f3f1]">
+                <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+              </div>
+              <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 20 }}>Book<span style={{ color: "#14967F" }}>My</span>Doc</span>
+            </div>
             <p className="mt-4 max-w-xs text-[14px] text-[#4e4d4d]" style={sans}>
               A smart appointment and patient management platform for independent doctors worldwide.
             </p>
