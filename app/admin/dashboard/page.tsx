@@ -831,12 +831,12 @@ export default function AdminDashboard() {
                     <div key={day.day_of_week} className="px-5 py-4">
                       <div className="flex items-center gap-4 flex-wrap">
                         {/* Day name + toggle */}
-                        <div className="flex items-center gap-3 w-20 flex-shrink-0">
+                        <div className="flex items-center gap-3 w-28 flex-shrink-0">
                           <button onClick={() => updateScheduleDay(day.day_of_week, "is_open", !day.is_open)}
                             className={`w-10 h-5 rounded-full transition-colors relative flex-shrink-0 ${day.is_open ? "bg-[#14967F]" : "bg-gray-200"}`}>
                             <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${day.is_open ? "translate-x-5" : "translate-x-0.5"}`}></span>
                           </button>
-                          <span className="font-semibold text-sm text-[#191919] w-8">{day.day_of_week}</span>
+                          <span className="font-semibold text-sm text-[#191919] w-10">{day.day_of_week}</span>
                         </div>
 
                         {day.is_open ? (
