@@ -6,16 +6,16 @@ export async function proxy(request: NextRequest) {
   const hostname = request.headers.get("host") || "";
 
   // ── SUBDOMAIN ROUTING ────────────────────────────────────────────────────────
-  const rootDomain = process.env.ROOT_DOMAIN || "localhost:3000";
-  const subdomain = hostname
-    .replace(`.${rootDomain}`, "")
-    .replace(rootDomain, "");
-
-  const RESERVED = ["www", "", "super-admin", "api"];
-  if (subdomain && !RESERVED.includes(subdomain) && !hostname.startsWith("localhost:")) {
-    const url = request.nextUrl.clone();
-    url.pathname = `/${subdomain}${pathname}`;
-    return NextResponse.rewrite(url);
+  // Only rewrite if ROOT_DOMAIN is set and hostname is truly a subdomain of it
+  const rootDomain = process.env.ROOT_DOMAIN;
+  if (rootDomain && hostname.endsWith(`.${rootDomain}`)) {
+    const subdomain = hostname.slice(0, hostname.length - rootDomain.length - 1);
+    const RESERVED = ["www", "", "super-admin", "api"];
+    if (subdomain && !RESERVED.includes(subdomain)) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/${subdomain}${pathname}`;
+      return NextResponse.rewrite(url);
+    }
   }
 
   // ── SUPABASE AUTH ────────────────────────────────────────────────────────────
