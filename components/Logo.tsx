@@ -5,29 +5,46 @@ type LogoProps = {
 };
 
 export function Logo({ size = 28, variant = "dark", iconOnly = false }: LogoProps) {
-  const textColor = variant === "light" ? "white" : "#191919";
-  const fontSize = Math.round(size * 0.72);
+  const serifColor = variant === "light" ? "#f6f3f1" : "#242424";
+  const iconSize = size;
+  const serifSize = Math.round(size * 0.74);
+  const monoSize = Math.round(size * 0.60);
 
   return (
-    <div className="flex items-center gap-2.5" style={{ lineHeight: 1 }}>
-      <svg width={size} height={size} viewBox="0 0 40 40" fill="none" aria-hidden>
-        <rect width="40" height="40" rx="11" fill="#14967F" />
-        <rect x="18" y="8" width="4" height="24" rx="2" fill="white" />
-        <rect x="8" y="18" width="24" height="4" rx="2" fill="white" />
+    <div className="flex items-center" style={{ gap: Math.round(size * 0.32), lineHeight: 1 }}>
+      {/* Icon: dark card + mint cross */}
+      <svg width={iconSize} height={iconSize} viewBox="0 0 40 40" fill="none" aria-hidden>
+        <rect width="40" height="40" rx="10" fill="#242424" />
+        <rect x="18" y="8" width="4" height="24" rx="2" fill="#a7fccd" />
+        <rect x="8" y="18" width="24" height="4" rx="2" fill="#a7fccd" />
       </svg>
+
       {!iconOnly && (
-        <span
-          style={{
-            fontFamily: "'Space Grotesk', system-ui, sans-serif",
+        <span style={{ display: "flex", alignItems: "baseline", gap: 1 }}>
+          {/* "Book" — Noto Serif */}
+          <span style={{
+            fontFamily: "'Noto Serif', Georgia, serif",
             fontWeight: 700,
-            fontSize,
-            color: textColor,
-            letterSpacing: "-0.01em",
-          }}
-        >
-          Book
-          <span style={{ color: "#14967F" }}>My</span>
-          Doc
+            fontSize: serifSize,
+            color: serifColor,
+            letterSpacing: "-0.02em",
+          }}>Book</span>
+          {/* "My" — IBM Plex Mono in teal */}
+          <span style={{
+            fontFamily: "'IBM Plex Mono', ui-monospace, monospace",
+            fontWeight: 500,
+            fontSize: monoSize,
+            color: "#14967F",
+            letterSpacing: "0.01em",
+          }}>My</span>
+          {/* "Doc" — Noto Serif */}
+          <span style={{
+            fontFamily: "'Noto Serif', Georgia, serif",
+            fontWeight: 700,
+            fontSize: serifSize,
+            color: serifColor,
+            letterSpacing: "-0.02em",
+          }}>Doc</span>
         </span>
       )}
     </div>

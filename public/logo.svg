@@ -1,10 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 44" fill="none">
-  <!-- Icon mark -->
-  <rect width="44" height="44" rx="13" fill="#14967F"/>
-  <rect x="20" y="9" width="4" height="26" rx="2" fill="white"/>
-  <rect x="9" y="20" width="26" height="4" rx="2" fill="white"/>
-  <!-- Wordmark -->
-  <text x="56" y="31" font-family="'Space Grotesk', system-ui, sans-serif" font-size="23" font-weight="700" fill="#191919">Book</text>
-  <text x="116" y="31" font-family="'Space Grotesk', system-ui, sans-serif" font-size="23" font-weight="700" fill="#14967F">My</text>
-  <text x="151" y="31" font-family="'Space Grotesk', system-ui, sans-serif" font-size="23" font-weight="700" fill="#191919">Doc</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 44" fill="none">
+  <!-- Icon: dark card + mint cross -->
+  <rect width="44" height="44" rx="11" fill="#242424"/>
+  <rect x="20" y="9" width="4" height="26" rx="2" fill="#a7fccd"/>
+  <rect x="9" y="20" width="26" height="4" rx="2" fill="#a7fccd"/>
+  <!-- Wordmark: Noto Serif for Book/Doc, IBM Plex Mono for My -->
+  <text x="56" y="30" font-family="'Noto Serif', Georgia, serif" font-size="22" font-weight="700" fill="#242424">Book</text>
+  <text x="114" y="30" font-family="'IBM Plex Mono', monospace" font-size="17" font-weight="500" fill="#14967F">My</text>
+  <text x="148" y="30" font-family="'Noto Serif', Georgia, serif" font-size="22" font-weight="700" fill="#242424">Doc</text>
 </svg>
