@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 44" fill="none">
+  <!-- Icon mark -->
+  <rect width="44" height="44" rx="13" fill="#14967F"/>
+  <rect x="20" y="9" width="4" height="26" rx="2" fill="white"/>
+  <rect x="9" y="20" width="26" height="4" rx="2" fill="white"/>
+  <!-- Wordmark -->
+  <text x="56" y="31" font-family="'Space Grotesk', system-ui, sans-serif" font-size="23" font-weight="700" fill="#191919">Book</text>
+  <text x="116" y="31" font-family="'Space Grotesk', system-ui, sans-serif" font-size="23" font-weight="700" fill="#14967F">My</text>
+  <text x="151" y="31" font-family="'Space Grotesk', system-ui, sans-serif" font-size="23" font-weight="700" fill="#191919">Doc</text>
+</svg>

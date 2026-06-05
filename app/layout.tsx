@@ -4,6 +4,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "BookMyDoc — Your Practice, Online",
   description: "BookMyDoc gives every doctor their own patient portal — appointment booking, digital prescriptions, patient records, and a branded landing page. No receptionist needed.",
+  icons: {
+    icon: "/logo-icon.svg",
+    apple: "/logo-icon.svg",
+  },
 };
 
 export default function RootLayout({
