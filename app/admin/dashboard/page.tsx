@@ -505,7 +505,7 @@ export default function AdminDashboard() {
             {doctor?.slug && (
               <>
                 <Link href={`/${doctor.slug}`} target="_blank"
-                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium text-[#14967F] border-[#14967F]/30 hover:bg-[#14967F]/5 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium text-[#14967F] border-[#14967F]/30 hover:bg-[#14967F]/5 transition-colors"
                   style={MONO}>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                   My Portal
@@ -517,7 +517,7 @@ export default function AdminDashboard() {
                     setCopied(true);
                     setTimeout(() => setCopied(false), 2000);
                   }}
-                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors"
                   style={{ ...MONO, color: copied ? "#14967F" : "#797776", borderColor: copied ? "#14967F" : "rgba(36,36,36,0.15)" }}>
                   {copied ? (
                     <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg> Copied!</>
