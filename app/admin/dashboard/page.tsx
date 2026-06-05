@@ -84,6 +84,7 @@ type FullRx = {
 
 type Doctor = {
   id: string;
+  slug: string;
   name: string;
   specialty: string;
   email: string;
@@ -145,7 +146,7 @@ export default function AdminDashboard() {
 
     const { data: doc } = await supabase
       .from("doctors")
-      .select("id, name, specialty, email, phone, hospital, address, city, bio, hours, services, plan, features")
+      .select("id, slug, name, specialty, email, phone, hospital, address, city, bio, hours, services, plan, features")
       .eq("user_id", user.id)
       .single();
 
