@@ -832,9 +832,17 @@ export default function AdminDashboard() {
                       <div className="flex items-center gap-4 flex-wrap">
                         {/* Day name + toggle */}
                         <div className="flex items-center gap-4 flex-shrink-0 min-w-[100px]">
-                          <button onClick={() => updateScheduleDay(day.day_of_week, "is_open", !day.is_open)}
-                            className={`w-10 h-5 rounded-full transition-colors relative flex-shrink-0 ${day.is_open ? "bg-[#14967F]" : "bg-gray-200"}`}>
-                            <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${day.is_open ? "translate-x-5" : "translate-x-0.5"}`}></span>
+                          <button
+                            onClick={() => updateScheduleDay(day.day_of_week, "is_open", !day.is_open)}
+                            className={`relative flex-shrink-0 rounded-full transition-all duration-200 flex items-center ${day.is_open ? "bg-green-500" : "bg-gray-300"}`}
+                            style={{ width: 58, height: 28 }}
+                          >
+                            <span className="absolute text-[10px] font-bold text-white uppercase tracking-wide"
+                              style={{ left: day.is_open ? 8 : "auto", right: day.is_open ? "auto" : 8 }}>
+                              {day.is_open ? "ON" : "OFF"}
+                            </span>
+                            <span className="absolute bg-white rounded-full shadow-md"
+                              style={{ width: 22, height: 22, top: 3, left: day.is_open ? "auto" : 3, right: day.is_open ? 3 : "auto", transition: "all 0.2s ease" }} />
                           </button>
                           <span className="font-semibold text-sm text-[#191919] min-w-[36px]">{day.day_of_week}</span>
                         </div>
