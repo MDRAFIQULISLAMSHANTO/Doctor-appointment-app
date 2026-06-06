@@ -771,10 +771,10 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                   <div className="flex gap-2 sm:flex-col">
-                    <button onClick={() => updateStatus(nextApt.id, "checked-in")} disabled={updatingStatus === nextApt.id}
-                      className="flex-1 sm:flex-none text-center bg-[#14967F] text-white rounded-xl px-5 py-2.5 text-sm font-bold hover:bg-[#0d7a66] transition-colors whitespace-nowrap disabled:opacity-50">
-                      Check In
-                    </button>
+                    <Link href={`/admin/checkin/${nextApt.id}`}
+                      className="flex-1 sm:flex-none text-center bg-[#14967F] text-white rounded-xl px-5 py-2.5 text-sm font-bold hover:bg-[#0d7a66] transition-colors whitespace-nowrap">
+                      Check In & Prescribe
+                    </Link>
                     <button onClick={() => setActiveNav("Appointments")}
                       className="flex-1 sm:flex-none text-center border border-white/30 text-white rounded-xl px-5 py-2.5 text-sm font-medium hover:bg-white/10 transition-colors whitespace-nowrap">
                       View All
@@ -911,16 +911,16 @@ export default function AdminDashboard() {
                             <td className="px-5 py-3.5">
                               <div className="flex gap-1 flex-wrap">
                                 {apt.status === "scheduled" && (
-                                  <button onClick={() => updateStatus(apt.id, "checked-in")} disabled={updatingStatus === apt.id}
-                                    className="text-xs text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded-lg px-2.5 py-1 font-medium disabled:opacity-50">
+                                  <Link href={`/admin/checkin/${apt.id}`}
+                                    className="text-xs text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded-lg px-2.5 py-1 font-medium">
                                     Check In
-                                  </button>
+                                  </Link>
                                 )}
                                 {apt.status === "checked-in" && (
-                                  <button onClick={() => updateStatus(apt.id, "checked-out")} disabled={updatingStatus === apt.id}
-                                    className="text-xs text-green-600 bg-green-50 hover:bg-green-100 rounded-lg px-2.5 py-1 font-medium disabled:opacity-50">
-                                    Check Out
-                                  </button>
+                                  <Link href={`/admin/checkin/${apt.id}`}
+                                    className="text-xs text-[#14967F] bg-[#e8f5f2] hover:bg-[#d0ede8] rounded-lg px-2.5 py-1 font-medium">
+                                    💊 Write Rx
+                                  </Link>
                                 )}
                                 {(apt.status === "scheduled" || apt.status === "checked-in") && (
                                   <button onClick={() => updateStatus(apt.id, "cancelled")} disabled={updatingStatus === apt.id}
@@ -1004,10 +1004,10 @@ export default function AdminDashboard() {
                             <td className="px-5 py-4">
                               <div className="flex gap-1 flex-col">
                                 {apt.status === "scheduled" && (
-                                  <button onClick={() => updateStatus(apt.id, "checked-in")} disabled={updatingStatus === apt.id}
-                                    className="text-xs text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded-lg px-2 py-1 font-medium disabled:opacity-50 whitespace-nowrap">
+                                  <Link href={`/admin/checkin/${apt.id}`}
+                                    className="text-xs text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded-lg px-2 py-1 font-medium whitespace-nowrap">
                                     Check In
-                                  </button>
+                                  </Link>
                                 )}
                                 {apt.status === "checked-in" && (
                                   <>
@@ -1015,10 +1015,10 @@ export default function AdminDashboard() {
                                       className="text-xs text-green-600 bg-green-50 hover:bg-green-100 rounded-lg px-2 py-1 font-medium disabled:opacity-50 whitespace-nowrap">
                                       Check Out
                                     </button>
-                                    <button onClick={() => openRxPanel(apt)}
+                                    <Link href={`/admin/checkin/${apt.id}`}
                                       className="text-xs text-[#14967F] bg-[#e8f5f2] hover:bg-[#d0ede8] rounded-lg px-2 py-1 font-medium whitespace-nowrap">
                                       💊 Write Rx
-                                    </button>
+                                    </Link>
                                   </>
                                 )}
                                 {(apt.status === "scheduled" || apt.status === "checked-in") && (
