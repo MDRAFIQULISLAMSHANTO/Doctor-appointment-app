@@ -503,11 +503,11 @@ export default function AdminDashboard() {
         const rx = rxForm[apt.id] ?? emptyRx();
         const setRx = (update: Partial<FullRx>) => setRxForm(f => ({ ...f, [apt.id]: { ...rx, ...update } }));
         return (
-          <div className="fixed inset-0 z-50 bg-black/50 flex">
-            <div className="flex flex-1 bg-white overflow-hidden max-h-screen">
+          <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-stretch">
+            <div className="flex flex-col sm:flex-row flex-1 bg-white overflow-hidden max-h-[95vh] sm:max-h-screen rounded-t-2xl sm:rounded-none w-full">
 
-              {/* LEFT — Patient history sidebar */}
-              <div className="w-72 flex-shrink-0 border-r border-gray-100 flex flex-col bg-[#f9f9f9] overflow-hidden">
+              {/* LEFT — Patient history sidebar (hidden on mobile, shown on sm+) */}
+              <div className="hidden sm:flex w-72 flex-shrink-0 border-r border-gray-100 flex-col bg-[#f9f9f9] overflow-hidden">
                 <div className="px-4 py-3.5 border-b border-gray-100 bg-white">
                   <p className="font-bold text-[#191919] text-sm">Patient History</p>
                   <p className="text-xs text-[#A3A3A3] mt-0.5">{apt.patients?.name} · {apt.patients?.phone}</p>
@@ -619,7 +619,7 @@ export default function AdminDashboard() {
                   </div>
 
                   {/* Notes + Next appt + Fee */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-[#191919] mb-1.5 uppercase tracking-wide">Notes</label>
                       <textarea rows={3} placeholder="Additional instructions..." value={rx.notes}
@@ -712,10 +712,10 @@ export default function AdminDashboard() {
             {doctor?.slug && (
               <>
                 <Link href={`/${doctor.slug}`} target="_blank"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium text-[#14967F] border-[#14967F]/30 hover:bg-[#14967F]/5 transition-colors"
-                  style={MONO}>
+                  className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border text-xs font-medium text-[#14967F] border-[#14967F]/30 hover:bg-[#14967F]/5 transition-colors"
+                  style={MONO} title="View My Portal">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                  My Portal
+                  <span className="hidden sm:inline">My Portal</span>
                 </Link>
                 <button
                   onClick={() => {
@@ -724,12 +724,13 @@ export default function AdminDashboard() {
                     setCopied(true);
                     setTimeout(() => setCopied(false), 2000);
                   }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors"
+                  className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors"
+                  title="Copy share link"
                   style={{ ...MONO, color: copied ? "#14967F" : "#797776", borderColor: copied ? "#14967F" : "rgba(36,36,36,0.15)" }}>
                   {copied ? (
-                    <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg> Copied!</>
+                    <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg><span className="hidden sm:inline"> Copied!</span></>
                   ) : (
-                    <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Share Link</>
+                    <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span className="hidden sm:inline"> Share</span></>
                   )}
                 </button>
               </>
@@ -740,18 +741,18 @@ export default function AdminDashboard() {
           </div>
         </header>
 
-        {/* Mobile nav */}
-        <div className="lg:hidden flex flex-wrap gap-1.5 px-4 py-3 border-b" style={{ background: "#f6f3f1", borderColor: "rgba(36,36,36,0.1)" }}>
+        {/* Mobile bottom nav */}
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t flex" style={{ borderColor: "rgba(36,36,36,0.1)" }}>
           {NAV.map(item => (
             <button key={item.label} onClick={() => setActiveNav(item.label)}
-              className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium ${activeNav === item.label ? "bg-[#242424] text-white" : "text-[#797776]"}`}
-              style={activeNav !== item.label ? { background: "rgba(36,36,36,0.06)" } : {}}>
-              {item.icon} {item.label}
+              className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-[9px] font-medium transition-colors ${activeNav === item.label ? "text-[#14967F]" : "text-[#A3A3A3]"}`}>
+              <span className="text-base leading-none">{item.icon}</span>
+              <span className="truncate max-w-[48px]">{item.label}</span>
             </button>
           ))}
-        </div>
+        </nav>
 
-        <div className="p-4 sm:p-6">
+        <div className="p-4 sm:p-6 pb-24 lg:pb-6">
 
           {/* ── DASHBOARD ── */}
           {activeNav === "Dashboard" && (
@@ -789,7 +790,7 @@ export default function AdminDashboard() {
               )}
 
               {/* Stats */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {[
                   { label: "Total", value: String(stats.total), icon: "📅", color: "bg-blue-50", text: "All appointments" },
                   { label: "Scheduled", value: String(stats.scheduled), icon: "🗓️", color: "bg-[#e8f5f2]", text: "Upcoming" },
@@ -957,37 +958,47 @@ export default function AdminDashboard() {
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead><tr className="border-b border-gray-100">
-                        {["#","Patient","Date & Time","Service","Mode","Status","Problem","Actions"].map(h => (
-                          <th key={h} className="text-left px-5 py-3.5 text-xs font-semibold text-[#A3A3A3] uppercase tracking-wider whitespace-nowrap">{h}</th>
+                        {[
+                          { h: "#", cls: "" },
+                          { h: "Patient", cls: "" },
+                          { h: "Date & Time", cls: "hidden sm:table-cell" },
+                          { h: "Service", cls: "hidden md:table-cell" },
+                          { h: "Mode", cls: "hidden lg:table-cell" },
+                          { h: "Status", cls: "" },
+                          { h: "Problem", cls: "hidden xl:table-cell" },
+                          { h: "Actions", cls: "" },
+                        ].map(({ h, cls }) => (
+                          <th key={h} className={`text-left px-3 sm:px-5 py-3.5 text-xs font-semibold text-[#A3A3A3] uppercase tracking-wider whitespace-nowrap ${cls}`}>{h}</th>
                         ))}
                       </tr></thead>
                       <tbody className="divide-y divide-gray-50">
                         {appointments.map(apt => (
                           <Fragment key={apt.id}>
                           <tr className="hover:bg-[rgba(36,36,36,0.03)]">
-                            <td className="px-5 py-4 whitespace-nowrap">
+                            <td className="px-3 sm:px-5 py-3.5 whitespace-nowrap">
                               <span className="text-xs font-bold text-[#14967F] bg-[#e8f5f2] rounded-lg px-2 py-1">#{String(apt.serial_number ?? 0).padStart(2,"0")}</span>
                             </td>
-                            <td className="px-5 py-4">
+                            <td className="px-3 sm:px-5 py-3.5">
                               <div className="flex items-center gap-2">
                                 <div className="w-8 h-8 rounded-full bg-[#14967F] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                                   {apt.patients?.name?.[0]?.toUpperCase() ?? "P"}
                                 </div>
                                 <div>
-                                  <p className="font-semibold text-[#191919]">{apt.patients?.name}</p>
+                                  <p className="font-semibold text-[#191919] text-sm">{apt.patients?.name}</p>
                                   <p className="text-xs text-[#A3A3A3]">{apt.patients?.phone}</p>
+                                  <p className="text-[10px] text-[#A3A3A3] sm:hidden">{formatDate(apt.date)} · {apt.time_slot}</p>
                                 </div>
                               </div>
                             </td>
-                            <td className="px-5 py-4 text-[#6b7280] whitespace-nowrap text-xs">{formatDate(apt.date)}<br/>{apt.time_slot}</td>
-                            <td className="px-5 py-4 text-[#6b7280] text-xs max-w-[120px]">{apt.service}</td>
-                            <td className="px-5 py-4 text-[#6b7280] text-xs capitalize">{apt.visit_type}</td>
-                            <td className="px-5 py-4">
-                              <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusColor[apt.status] || "bg-gray-100 text-gray-500"}`}>
+                            <td className="px-3 sm:px-5 py-3.5 text-[#6b7280] whitespace-nowrap text-xs hidden sm:table-cell">{formatDate(apt.date)}<br/>{apt.time_slot}</td>
+                            <td className="px-3 sm:px-5 py-3.5 text-[#6b7280] text-xs max-w-[120px] hidden md:table-cell">{apt.service}</td>
+                            <td className="px-3 sm:px-5 py-3.5 text-[#6b7280] text-xs capitalize hidden lg:table-cell">{apt.visit_type}</td>
+                            <td className="px-3 sm:px-5 py-3.5">
+                              <span className={`text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap ${statusColor[apt.status] || "bg-gray-100 text-gray-500"}`}>
                                 {statusLabel[apt.status] ?? apt.status}
                               </span>
                             </td>
-                            <td className="px-5 py-4 text-xs text-[#6b7280] max-w-[150px]">
+                            <td className="px-3 sm:px-5 py-3.5 text-xs text-[#6b7280] max-w-[150px] hidden xl:table-cell">
                               <p className="truncate" title={apt.problem_text}>{apt.problem_text || "—"}</p>
                             </td>
                             <td className="px-5 py-4">
@@ -1068,8 +1079,8 @@ export default function AdminDashboard() {
                 </div>
                 <div className="divide-y divide-gray-50">
                   {schedule.map(day => (
-                    <div key={day.day_of_week} className="px-5 py-4">
-                      <div className="flex items-center gap-4 flex-wrap">
+                    <div key={day.day_of_week} className="px-4 sm:px-5 py-4">
+                      <div className="flex flex-wrap items-center gap-3">
                         {/* Day name + toggle */}
                         <div className="flex items-center gap-4 flex-shrink-0 min-w-[100px]">
                           <button
@@ -1088,7 +1099,7 @@ export default function AdminDashboard() {
                         </div>
 
                         {day.is_open ? (
-                          <div className="flex items-center gap-3 flex-wrap flex-1">
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-3 flex-1 mt-2 sm:mt-0">
                             <div className="flex items-center gap-2">
                               <label className="text-xs text-[#A3A3A3]">From</label>
                               <input type="time"
@@ -1653,7 +1664,7 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* KPI top strip */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   {[
                     { label: "Today", value: String(todayData.count), sub: `৳${todayData.revenue.toLocaleString()} revenue`, icon: "📅", color: "bg-blue-50" },
                     { label: "This Month", value: String(thisMonthApts.length), sub: `৳${thisMonthRevenue.toLocaleString()} revenue`, icon: "🗓️", color: "bg-[#e8f5f2]" },
