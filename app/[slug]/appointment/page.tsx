@@ -21,6 +21,19 @@ function AppointmentContent() {
   const supabase = createClient();
   const today = new Date();
 
+  // Parse date/time pre-selected from landing page
+  const dateParam = searchParams.get("date"); // YYYY-MM-DD
+  const timeParam = searchParams.get("time"); // HH:MM (24h)
+
+  function parseSlotParam(t: string): string {
+    const [h, m] = t.split(":").map(Number);
+    const period = h >= 12 ? "PM" : "AM";
+    const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
+    return `${displayH}:${String(m).padStart(2, "0")} ${period}`;
+  }
+
+  const initDate = dateParam ? new Date(dateParam + "T00:00:00") : null;
+
   const [patient, setPatient] = useState<PatientUser | null>(null);
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
@@ -30,11 +43,11 @@ function AppointmentContent() {
   const [showAuthChoice, setShowAuthChoice] = useState(false);
   const [guestInfo, setGuestInfo] = useState({ name: "", phone: "", age: "", gender: "" });
 
-  // Calendar
-  const [month, setMonth] = useState(today.getMonth());
-  const [year, setYear] = useState(today.getFullYear());
-  const [selectedDate, setSelectedDate] = useState<number | null>(null);
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  // Calendar — pre-seed from URL if available
+  const [month, setMonth] = useState(initDate ? initDate.getMonth() : today.getMonth());
+  const [year, setYear] = useState(initDate ? initDate.getFullYear() : today.getFullYear());
+  const [selectedDate, setSelectedDate] = useState<number | null>(initDate ? initDate.getDate() : null);
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(timeParam ? parseSlotParam(timeParam) : null);
   const [slots, setSlots] = useState<SlotInfo[]>([]);
   const [closedDay, setClosedDay] = useState(false);
   const [slotsLoading, setSlotsLoading] = useState(false);
@@ -49,17 +62,22 @@ function AppointmentContent() {
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
+      let hasPatient = false;
       if (user) {
         const { data: pat } = await supabase.from("patients").select("id, name, phone").eq("user_id", user.id).single();
-        if (pat) { setPatient(pat as PatientUser); setBookingMode("portal"); }
+        if (pat) { setPatient(pat as PatientUser); setBookingMode("portal"); hasPatient = true; }
       }
       const { data: doc } = await supabase.from("doctors").select("id, name, slug, specialty, hospital, services").eq("slug", slug).single();
       if (doc) {
         setDoctor(doc as Doctor);
-        // Auto-set service to doctor's specialty — no user selection needed
         setForm(f => ({ ...f, service: (doc as Doctor).specialty ?? (doc as Doctor).services?.[0] ?? "Consultation" }));
       }
       setAuthChecked(true);
+      // If landing pre-selected date+time, skip calendar step
+      if (dateParam && timeParam) {
+        if (hasPatient) { setStep(2); }
+        else { setShowAuthChoice(true); }
+      }
     };
     init();
   }, [slug]);

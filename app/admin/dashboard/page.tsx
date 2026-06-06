@@ -82,6 +82,21 @@ type FullRx = {
   next_time: string;
 };
 
+type HistoryEntry = {
+  id: string;
+  date: string;
+  time_slot: string;
+  service: string;
+  status: string;
+  problem_text?: string;
+  prescriptions?: Array<{
+    diagnosis: string;
+    medicines: Medicine[];
+    fee: number;
+    notes?: string;
+  }>;
+};
+
 type Doctor = {
   id: string;
   slug: string;
@@ -120,6 +135,9 @@ export default function AdminDashboard() {
   const [savingSchedule, setSavingSchedule] = useState(false);
   const [copied, setCopied] = useState(false);
   const [newBlockDate, setNewBlockDate] = useState({ date: "", reason: "" });
+  const [rxPanelApt, setRxPanelApt] = useState<Appointment | null>(null);
+  const [patientHistory, setPatientHistory] = useState<HistoryEntry[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [blockingDate, setBlockingDate] = useState(false);
 
   // Manual appointment modal state
@@ -216,6 +234,22 @@ export default function AdminDashboard() {
     await supabase.from("appointments").update({ status }).eq("id", id);
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status } : a));
     setUpdatingStatus(null);
+  };
+
+  const openRxPanel = async (apt: Appointment) => {
+    setRxPanelApt(apt);
+    if (!rxForm[apt.id]) setRxForm(f => ({ ...f, [apt.id]: emptyRx() }));
+    if (!apt.patients?.id) return;
+    setHistoryLoading(true);
+    const { data } = await supabase
+      .from("appointments")
+      .select("id, date, time_slot, service, status, problem_text, prescriptions(diagnosis, medicines, fee, notes)")
+      .eq("patient_id", apt.patients.id)
+      .neq("id", apt.id)
+      .order("date", { ascending: false })
+      .limit(15);
+    setPatientHistory((data as HistoryEntry[]) ?? []);
+    setHistoryLoading(false);
   };
 
   const handleLogout = async () => {
@@ -462,6 +496,178 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen flex" style={{ background: "#f6f3f1" }}>
+
+      {/* ── RX PANEL OVERLAY ── */}
+      {rxPanelApt && (() => {
+        const apt = rxPanelApt;
+        const rx = rxForm[apt.id] ?? emptyRx();
+        const setRx = (update: Partial<FullRx>) => setRxForm(f => ({ ...f, [apt.id]: { ...rx, ...update } }));
+        return (
+          <div className="fixed inset-0 z-50 bg-black/50 flex">
+            <div className="flex flex-1 bg-white overflow-hidden max-h-screen">
+
+              {/* LEFT — Patient history sidebar */}
+              <div className="w-72 flex-shrink-0 border-r border-gray-100 flex flex-col bg-[#f9f9f9] overflow-hidden">
+                <div className="px-4 py-3.5 border-b border-gray-100 bg-white">
+                  <p className="font-bold text-[#191919] text-sm">Patient History</p>
+                  <p className="text-xs text-[#A3A3A3] mt-0.5">{apt.patients?.name} · {apt.patients?.phone}</p>
+                </div>
+                <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
+                  {historyLoading ? (
+                    <div className="py-10 text-center"><div className="w-5 h-5 border-2 border-[#14967F] border-t-transparent rounded-full animate-spin mx-auto"/></div>
+                  ) : patientHistory.length === 0 ? (
+                    <div className="py-10 text-center text-xs text-[#A3A3A3]">No previous visits</div>
+                  ) : patientHistory.map(h => (
+                    <div key={h.id} className="bg-white rounded-xl p-3 border border-gray-100 text-xs">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-semibold text-[#191919]">{h.date}</span>
+                        <span className="text-[#A3A3A3]">{h.time_slot}</span>
+                      </div>
+                      <p className="text-[#6b7280] mb-1">{h.service}</p>
+                      {h.problem_text && <p className="text-[#A3A3A3] italic mb-2">&quot;{h.problem_text}&quot;</p>}
+                      {(h.prescriptions ?? []).map((rx, i) => (
+                        <div key={i} className="mt-2 pt-2 border-t border-gray-50">
+                          <p className="font-medium text-[#14967F] mb-1">Dx: {rx.diagnosis}</p>
+                          {(rx.medicines ?? []).map((m, mi) => (
+                            <div key={mi} className="flex items-center justify-between py-0.5 gap-2">
+                              <span className="text-[#191919] flex-1">{m.name} <span className="text-[#A3A3A3]">{m.dosage}</span></span>
+                              <button
+                                onClick={() => {
+                                  const already = rx.medicines?.find(x => x.name === m.name);
+                                  if (already) return;
+                                  setRxForm(f => {
+                                    const cur = f[apt.id] ?? emptyRx();
+                                    return { ...f, [apt.id]: { ...cur, medicines: [...cur.medicines, { ...m }] } };
+                                  });
+                                }}
+                                className="text-[10px] text-[#14967F] border border-[#14967F]/30 rounded px-1.5 py-0.5 hover:bg-[#e8f5f2] whitespace-nowrap flex-shrink-0">
+                                + Add
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* RIGHT — Prescription form */}
+              <div className="flex-1 flex flex-col overflow-hidden">
+                {/* Header */}
+                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white flex-shrink-0">
+                  <div>
+                    <p className="font-bold text-[#191919]">Write Prescription</p>
+                    <p className="text-xs text-[#A3A3A3] mt-0.5">
+                      {apt.patients?.name} · {apt.service} · {apt.date} {apt.time_slot} · Serial #{String(apt.serial_number ?? 0).padStart(2,"0")}
+                    </p>
+                  </div>
+                  <button onClick={() => setRxPanelApt(null)} className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-[#6b7280] text-lg font-bold">×</button>
+                </div>
+
+                {/* Form */}
+                <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+                  {/* Diagnosis */}
+                  <div>
+                    <label className="block text-xs font-bold text-[#191919] mb-1.5 uppercase tracking-wide">Diagnosis *</label>
+                    <input type="text" placeholder="Primary diagnosis" value={rx.diagnosis}
+                      onChange={e => setRx({ diagnosis: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-100 focus:border-[#14967F] focus:outline-none text-sm"/>
+                  </div>
+
+                  {/* Medicines */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-bold text-[#191919] uppercase tracking-wide">Medications</label>
+                      <button onClick={() => addMedicine(apt.id)}
+                        className="text-xs text-[#14967F] border border-[#14967F]/30 rounded-lg px-2.5 py-1 hover:bg-[#e8f5f2]">
+                        + Add Row
+                      </button>
+                    </div>
+                    {rx.medicines.length === 0 ? (
+                      <div className="border-2 border-dashed border-gray-200 rounded-xl py-6 text-center text-xs text-[#A3A3A3]">
+                        No medicines added — click &ldquo;+ Add Row&rdquo; or pick from history
+                      </div>
+                    ) : (
+                      <div className="border border-gray-100 rounded-xl overflow-hidden">
+                        <table className="w-full text-xs">
+                          <thead><tr className="bg-gray-50">
+                            {["Medicine","Dosage","Frequency","Duration","Instructions",""].map(h => (
+                              <th key={h} className="px-3 py-2 text-left font-semibold text-[#A3A3A3] text-[10px] uppercase tracking-wide">{h}</th>
+                            ))}
+                          </tr></thead>
+                          <tbody className="divide-y divide-gray-50">
+                            {rx.medicines.map((m, i) => (
+                              <tr key={i}>
+                                <td className="px-2 py-1.5"><input value={m.name} onChange={e => updateMedicine(apt.id, i, "name", e.target.value)} placeholder="Medicine name" className="w-full px-2 py-1 rounded-lg border border-gray-200 focus:outline-none focus:border-[#14967F] text-xs"/></td>
+                                <td className="px-2 py-1.5"><input value={m.dosage} onChange={e => updateMedicine(apt.id, i, "dosage", e.target.value)} placeholder="500mg" className="w-full px-2 py-1 rounded-lg border border-gray-200 focus:outline-none focus:border-[#14967F] text-xs"/></td>
+                                <td className="px-2 py-1.5">
+                                  <select value={m.frequency} onChange={e => updateMedicine(apt.id, i, "frequency", e.target.value)} className="w-full px-2 py-1 rounded-lg border border-gray-200 focus:outline-none focus:border-[#14967F] text-xs bg-white">
+                                    <option value="">—</option>
+                                    {["Once daily","Twice daily","Three times daily","Four times daily","Every 6 hours","Every 8 hours","As needed","At bedtime","With meals"].map(o => <option key={o} value={o}>{o}</option>)}
+                                  </select>
+                                </td>
+                                <td className="px-2 py-1.5"><input value={m.duration} onChange={e => updateMedicine(apt.id, i, "duration", e.target.value)} placeholder="7 days" className="w-full px-2 py-1 rounded-lg border border-gray-200 focus:outline-none focus:border-[#14967F] text-xs"/></td>
+                                <td className="px-2 py-1.5"><input value={m.instructions} onChange={e => updateMedicine(apt.id, i, "instructions", e.target.value)} placeholder="After meals" className="w-full px-2 py-1 rounded-lg border border-gray-200 focus:outline-none focus:border-[#14967F] text-xs"/></td>
+                                <td className="px-2 py-1.5"><button onClick={() => removeMedicine(apt.id, i)} className="text-red-400 hover:text-red-600 font-bold text-base leading-none px-1">×</button></td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Notes + Next appt + Fee */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-[#191919] mb-1.5 uppercase tracking-wide">Notes</label>
+                      <textarea rows={3} placeholder="Additional instructions..." value={rx.notes}
+                        onChange={e => setRx({ notes: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border-2 border-gray-100 focus:border-[#14967F] focus:outline-none text-sm resize-none"/>
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-bold text-[#191919] mb-1.5 uppercase tracking-wide">Consultation Fee ($)</label>
+                        <input type="number" placeholder="0" value={rx.fee}
+                          onChange={e => setRx({ fee: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border-2 border-gray-100 focus:border-[#14967F] focus:outline-none text-sm"/>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-[#191919] mb-1.5 uppercase tracking-wide">Next Appointment</label>
+                        <div className="flex gap-2">
+                          <input type="date" value={rx.next_date} onChange={e => setRx({ next_date: e.target.value })}
+                            className="flex-1 px-3 py-2 rounded-xl border-2 border-gray-100 focus:border-[#14967F] focus:outline-none text-sm"/>
+                          <input type="time" value={rx.next_time} onChange={e => setRx({ next_time: e.target.value })}
+                            className="w-28 px-3 py-2 rounded-xl border-2 border-gray-100 focus:border-[#14967F] focus:outline-none text-sm"/>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer actions */}
+                <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between gap-3 bg-white flex-shrink-0">
+                  <button onClick={() => setRxPanelApt(null)} className="px-5 py-2.5 rounded-xl border-2 border-gray-200 text-sm text-[#6b7280] hover:border-gray-300">
+                    Cancel
+                  </button>
+                  <div className="flex gap-2">
+                    <button onClick={() => { printPrescription(apt, rx); }}
+                      className="px-5 py-2.5 rounded-xl border-2 border-[#14967F] text-[#14967F] text-sm font-semibold hover:bg-[#e8f5f2]">
+                      🖨 Print
+                    </button>
+                    <button onClick={async () => { await saveRx(apt); setRxPanelApt(null); }} disabled={savingRx === apt.id || !rx.diagnosis}
+                      className="px-5 py-2.5 rounded-xl bg-[#14967F] text-white text-sm font-semibold hover:bg-[#0d7a66] disabled:opacity-40">
+                      {savingRx === apt.id ? "Saving..." : "Save Prescription"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Sidebar */}
       <aside className="hidden lg:flex flex-col w-60 h-screen fixed left-0 top-0 z-30 border-r" style={{ background: "#f6f3f1", borderColor: "rgba(36,36,36,0.1)" }}>
         <div className="px-5 py-5 border-b" style={{ borderColor: "rgba(36,36,36,0.1)" }}>
@@ -793,10 +999,16 @@ export default function AdminDashboard() {
                                   </button>
                                 )}
                                 {apt.status === "checked-in" && (
-                                  <button onClick={() => updateStatus(apt.id, "checked-out")} disabled={updatingStatus === apt.id}
-                                    className="text-xs text-green-600 bg-green-50 hover:bg-green-100 rounded-lg px-2 py-1 font-medium disabled:opacity-50 whitespace-nowrap">
-                                    Check Out
-                                  </button>
+                                  <>
+                                    <button onClick={() => updateStatus(apt.id, "checked-out")} disabled={updatingStatus === apt.id}
+                                      className="text-xs text-green-600 bg-green-50 hover:bg-green-100 rounded-lg px-2 py-1 font-medium disabled:opacity-50 whitespace-nowrap">
+                                      Check Out
+                                    </button>
+                                    <button onClick={() => openRxPanel(apt)}
+                                      className="text-xs text-[#14967F] bg-[#e8f5f2] hover:bg-[#d0ede8] rounded-lg px-2 py-1 font-medium whitespace-nowrap">
+                                      💊 Write Rx
+                                    </button>
+                                  </>
                                 )}
                                 {(apt.status === "scheduled" || apt.status === "checked-in") && (
                                   <button onClick={() => updateStatus(apt.id, "cancelled")} disabled={updatingStatus === apt.id}

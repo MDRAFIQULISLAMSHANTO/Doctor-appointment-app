@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 import {
   Calendar, Clock, Phone, Mail, MapPin, Star, Menu, X, Check,
   ArrowRight, ArrowUpRight, ShieldCheck, Award, Stethoscope,
@@ -173,6 +174,16 @@ export default function DoctorLanding({ doc, brand, brandLight }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [bannerOpen, setBannerOpen] = useState(true);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [isOwner, setIsOwner] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      supabase.from("doctors").select("id").eq("user_id", user.id).eq("slug", doc.slug).maybeSingle()
+        .then(({ data }) => { if (data) setIsOwner(true); });
+    });
+  }, [doc.slug]);
 
   const services = doc.services ?? ["General Consultation"];
   const stats = doc.stats ?? { patients: "500", experience: "5", rating: "4.9", reviews: "120" };
@@ -258,11 +269,20 @@ export default function DoctorLanding({ doc, brand, brandLight }: Props) {
                 {doc.phone}
               </a>
             )}
-            <Link href={`/${doc.slug}/login`}
-              className="px-4 py-2.5 rounded-[100px] text-[13px] text-[#242424] border border-[#242424]/30 hover:border-[#242424] transition-colors"
-              style={MONO}>
-              Login
-            </Link>
+            {isOwner ? (
+              <Link href="/admin/dashboard"
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-[100px] text-[13px] text-[#f6f3f1] transition-colors"
+                style={{ ...MONO, background: brand }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                Admin Dashboard
+              </Link>
+            ) : (
+              <Link href={`/${doc.slug}/login`}
+                className="px-4 py-2.5 rounded-[100px] text-[13px] text-[#242424] border border-[#242424]/30 hover:border-[#242424] transition-colors"
+                style={MONO}>
+                Login
+              </Link>
+            )}
           </div>
 
           <button className="md:hidden p-2 text-[#000]" onClick={() => setMobileOpen(!mobileOpen)}>
