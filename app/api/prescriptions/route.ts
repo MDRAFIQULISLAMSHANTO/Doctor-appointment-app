@@ -34,14 +34,14 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const { appointment_id, patient_id, doctor_id, diagnosis, notes, file_url, medicines, fee, next_appointment_date, next_appointment_time } = body;
 
-  if (!appointment_id || !patient_id || !doctor_id || !diagnosis) {
+  if (!appointment_id || !doctor_id || !diagnosis) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
   const { data, error } = await supabase
     .from("prescriptions")
     .insert({
-      appointment_id, patient_id, doctor_id, diagnosis, notes, file_url,
+      appointment_id, patient_id: patient_id ?? null, doctor_id, diagnosis, notes, file_url,
       medicines: medicines ?? [],
       fee: fee ?? 0,
       next_appointment_date: next_appointment_date ?? null,

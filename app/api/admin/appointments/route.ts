@@ -83,11 +83,12 @@ export async function POST(req: NextRequest) {
       patient_id = existing.id;
     } else {
       // Create new patient record
+      const validGender = ["male", "female", "other"].includes(patient_gender) ? patient_gender : null;
       const newPatient: Record<string, unknown> = {
         phone: cleanPhone,
         name: patient_name ?? "Unknown",
         age: patient_age ? parseInt(String(patient_age)) : null,
-        gender: patient_gender ?? null,
+        gender: validGender,
         has_portal_access: portal_access,
         created_by_doctor_id: doctor.id,
       };
@@ -158,19 +159,23 @@ export async function POST(req: NextRequest) {
   // ── Optional prescription ────────────────────────────────────────────────────
   let rx = null;
   if (prescription?.diagnosis) {
-    const { data: rxData } = await svc
+    // Map incoming medication shape -> stored medicine shape.
+    const medicines = (prescription.medications ?? []).map((m: { name: string; dose?: string; frequency?: string; duration?: string }) => ({
+      name: m.name, dosage: m.dose ?? "", frequency: m.frequency ?? "", duration: m.duration ?? "", instructions: "",
+    }));
+    const { data: rxData, error: rxErr } = await svc
       .from("prescriptions")
       .insert({
         appointment_id: appointment.id,
         doctor_id: doctor.id,
         patient_id,
         diagnosis: prescription.diagnosis,
-        rx_notes: prescription.rx_notes ?? "",
-        medications: prescription.medications ?? [],
-        bill_amount: prescription.bill_amount ?? 0,
-        locked: false,
+        notes: prescription.rx_notes ?? "",
+        medicines,
+        fee: prescription.bill_amount ?? 0,
       })
       .select().single();
+    if (rxErr) return NextResponse.json({ error: `Appointment created but prescription failed: ${rxErr.message}` }, { status: 500 });
     rx = rxData;
   }
 

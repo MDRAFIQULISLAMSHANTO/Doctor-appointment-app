@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { PasswordInput } from "@/components/PasswordInput";
 
 export default function DoctorRegister() {
   const router = useRouter();
@@ -161,15 +162,17 @@ export default function DoctorRegister() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-semibold text-[#191919] mb-1.5">Password *</label>
-                  <input type="password" placeholder="Min 8 characters" value={form.password}
-                    onChange={e => setForm({...form, password: e.target.value})}
+                  <PasswordInput value={form.password}
+                    onChange={v => setForm({...form, password: v})}
+                    placeholder="Min 8 characters"
                     className={`w-full px-4 py-3 rounded-xl border-2 text-sm focus:outline-none transition-colors ${errors.password ? "border-red-300" : "border-gray-100 focus:border-[#191919]"}`}/>
                   {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-[#191919] mb-1.5">Confirm Password *</label>
-                  <input type="password" placeholder="Repeat password" value={form.confirm}
-                    onChange={e => setForm({...form, confirm: e.target.value})}
+                  <PasswordInput value={form.confirm}
+                    onChange={v => setForm({...form, confirm: v})}
+                    placeholder="Repeat password"
                     className={`w-full px-4 py-3 rounded-xl border-2 text-sm focus:outline-none transition-colors ${errors.confirm ? "border-red-300" : "border-gray-100 focus:border-[#191919]"}`}/>
                   {errors.confirm && <p className="text-red-500 text-xs mt-1">{errors.confirm}</p>}
                 </div>

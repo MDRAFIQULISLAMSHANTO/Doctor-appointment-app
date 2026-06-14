@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { PasswordInput } from "@/components/PasswordInput";
 
 export default function AdminLogin() {
   const router = useRouter();
@@ -85,8 +86,9 @@ export default function AdminLogin() {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-[#191919] mb-1.5">Password</label>
-                <input type="password" placeholder="Enter your password" value={form.password}
-                  onChange={e => { setForm({...form, password: e.target.value}); setError(""); }}
+                <PasswordInput value={form.password}
+                  onChange={v => { setForm({...form, password: v}); setError(""); }}
+                  placeholder="Enter your password"
                   className="w-full px-4 py-3 rounded-xl border-2 border-gray-100 focus:outline-none focus:border-[#191919] text-sm"/>
               </div>
               {error && <p className="text-red-500 text-xs">{error}</p>}

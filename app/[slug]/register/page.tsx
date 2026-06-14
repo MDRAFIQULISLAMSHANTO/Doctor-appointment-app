@@ -3,6 +3,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { PasswordInput } from "@/components/PasswordInput";
 
 function RegisterForm() {
   const params = useParams();
@@ -92,12 +93,12 @@ function RegisterForm() {
             </div>
             <div>
               <label className="block text-xs font-semibold text-[#6b7280] mb-1">Password * <span className="font-normal text-[#A3A3A3]">(min 6 chars)</span></label>
-              <input type="password" required value={form.password} onChange={set("password")} placeholder="••••••••" minLength={6}
+              <PasswordInput value={form.password} onChange={v => setForm(f => ({ ...f, password: v }))} placeholder="••••••••"
                 className="w-full bg-[#F4F4F5] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#14967F]"/>
             </div>
             <div>
               <label className="block text-xs font-semibold text-[#6b7280] mb-1">Confirm Password *</label>
-              <input type="password" required value={form.confirm} onChange={set("confirm")} placeholder="••••••••"
+              <PasswordInput value={form.confirm} onChange={v => setForm(f => ({ ...f, confirm: v }))} placeholder="••••••••"
                 className="w-full bg-[#F4F4F5] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#14967F]"/>
             </div>
 

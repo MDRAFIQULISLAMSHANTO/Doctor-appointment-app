@@ -1,7 +1,7 @@
 "use client";
 export const dynamic = 'force-dynamic';
 import { useState, useEffect, Suspense } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
@@ -12,7 +12,6 @@ function detectType(value: string): "doctor" | "patient" {
 function LoginForm() {
   const params = useParams();
   const slug = params.slug as string;
-  const router = useRouter();
   const searchParams = useSearchParams();
   const patientRedirect = searchParams.get("redirect") || `/${slug}/patient/dashboard`;
 
@@ -44,14 +43,15 @@ function LoginForm() {
     if (loginType === "doctor") {
       const { error: authError } = await supabase.auth.signInWithPassword({ email: val, password });
       if (authError) { setError("Invalid email or password"); setLoading(false); return; }
-      router.push("/admin/dashboard"); router.refresh();
+      // Full reload so server proxy/middleware sees the new session cookie.
+      window.location.assign("/admin/dashboard");
     } else {
       const phone = val.replace(/\D/g, "");
       const { error: authError } = await supabase.auth.signInWithPassword({
         email: `${phone}@patient.docapp.local`, password,
       });
       if (authError) { setError("Invalid phone or password"); setLoading(false); return; }
-      router.push(patientRedirect); router.refresh();
+      window.location.assign(patientRedirect);
     }
   };
 
@@ -101,9 +101,14 @@ function LoginForm() {
                   className="w-full rounded-xl px-4 py-3 text-[#242424] text-sm pr-14 focus:outline-none focus:ring-2 focus:ring-[#242424] border-2 border-transparent"
                   style={{ background: "rgba(36,36,36,0.05)" }}
                 />
-                <button type="button" onClick={() => setShowPass(s => !s)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A3A3A3] hover:text-[#797776] text-xs" style={MONO}>
-                  {showPass ? "Hide" : "Show"}
+                <button type="button" onClick={() => setShowPass(s => !s)} tabIndex={-1}
+                  aria-label={showPass ? "Hide password" : "Show password"}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A3A3A3] hover:text-[#797776]">
+                  {showPass ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                  )}
                 </button>
               </div>
             </div>

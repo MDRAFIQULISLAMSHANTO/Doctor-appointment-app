@@ -104,7 +104,7 @@ export default function CheckinPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         appointment_id: apt.id,
-        patient_id: apt.patients?.id,
+        patient_id: apt.patients?.id ?? null,
         doctor_id: doctor.id,
         diagnosis: rx.diagnosis,
         medicines: rx.medicines,
@@ -114,7 +114,12 @@ export default function CheckinPage() {
         next_appointment_time: rx.next_time || null,
       }),
     });
-    if (!res.ok) { setError("Failed to save"); setSaving(false); return; }
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      setError(d.error ? `Failed to save: ${d.error}` : "Failed to save prescription");
+      setSaving(false);
+      return;
+    }
     await supabase.from("appointments").update({ status: "checked-out", fee: rx.fee ? parseInt(rx.fee) : 0 }).eq("id", apt.id);
     setSaved(true); setSaving(false);
   };
