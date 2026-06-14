@@ -14,6 +14,20 @@ const NAV = [
   { label: "Settings", icon: "⚙️" },
 ];
 
+// Current date (YYYY-MM-DD) and rounded time slot for default inputs.
+function todayISO(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function nowSlot(): string {
+  const d = new Date();
+  let h = d.getHours();
+  const period = h >= 12 ? "PM" : "AM";
+  h = h % 12 || 12;
+  const rounded = d.getMinutes() < 30 ? "00" : "30";
+  return `${h}:${rounded} ${period}`;
+}
+
 const statusColor: Record<string, string> = {
   "checked-out": "bg-green-50 text-green-600",
   "checked-in":  "bg-yellow-50 text-yellow-600",
@@ -82,21 +96,6 @@ type FullRx = {
   next_time: string;
 };
 
-type HistoryEntry = {
-  id: string;
-  date: string;
-  time_slot: string;
-  service: string;
-  status: string;
-  problem_text?: string;
-  prescriptions?: Array<{
-    diagnosis: string;
-    medicines: Medicine[];
-    fee: number;
-    notes?: string;
-  }>;
-};
-
 type Doctor = {
   id: string;
   slug: string;
@@ -134,10 +133,7 @@ export default function AdminDashboard() {
   const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([]);
   const [savingSchedule, setSavingSchedule] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [newBlockDate, setNewBlockDate] = useState({ date: "", reason: "" });
-  const [rxPanelApt, setRxPanelApt] = useState<Appointment | null>(null);
-  const [patientHistory, setPatientHistory] = useState<HistoryEntry[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
+  const [newBlockDate, setNewBlockDate] = useState({ date: todayISO(), reason: "" });
   const [blockingDate, setBlockingDate] = useState(false);
 
   // Manual appointment modal state
@@ -234,22 +230,6 @@ export default function AdminDashboard() {
     await supabase.from("appointments").update({ status }).eq("id", id);
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status } : a));
     setUpdatingStatus(null);
-  };
-
-  const openRxPanel = async (apt: Appointment) => {
-    setRxPanelApt(apt);
-    if (!rxForm[apt.id]) setRxForm(f => ({ ...f, [apt.id]: emptyRx() }));
-    if (!apt.patients?.id) return;
-    setHistoryLoading(true);
-    const { data } = await supabase
-      .from("appointments")
-      .select("id, date, time_slot, service, status, problem_text, prescriptions(diagnosis, medicines, fee, notes)")
-      .eq("patient_id", apt.patients.id)
-      .neq("id", apt.id)
-      .order("date", { ascending: false })
-      .limit(15);
-    setPatientHistory((data as HistoryEntry[]) ?? []);
-    setHistoryLoading(false);
   };
 
   const handleLogout = async () => {
@@ -375,7 +355,7 @@ export default function AdminDashboard() {
     setShowNewApt(true); setManualStep(1);
     setPatientSearch(""); setFoundPatient(null); setIsNewPatient(false);
     setManualPatientForm({ name: "", phone: "", age: "", gender: "", portal_access: false, portal_password: "" });
-    setManualAptForm({ date: "", time_slot: "", service: doctor?.specialty ?? doctor?.services?.[0] ?? "Consultation", visit_type: "in-person", problem: "", notes: "", fee: "" });
+    setManualAptForm({ date: todayISO(), time_slot: nowSlot(), service: doctor?.specialty ?? doctor?.services?.[0] ?? "Consultation", visit_type: "in-person", problem: "", notes: "", fee: "" });
     setManualRxEnabled(false); setManualRxForm({ diagnosis: "", rx_notes: "", bill_amount: "" });
     setManualSuccess(null); setManualError("");
   };
@@ -455,7 +435,7 @@ export default function AdminDashboard() {
     <div class="info-row"><span class="label">Visit Date</span><span class="value">${apt.date}</span></div>
     <div class="info-row"><span class="label">Service</span><span class="value">${apt.service}</span></div>
     <div class="info-row"><span class="label">Diagnosis</span><span class="value">${rx.diagnosis}</span></div>
-    ${rx.fee ? `<div class="info-row"><span class="label">Consultation Fee</span><span class="value">৳${rx.fee}</span></div>` : ""}
+    ${rx.fee ? `<div class="info-row"><span class="label">Consultation Fee</span><span class="value">$${rx.fee}</span></div>` : ""}
     ${rx.next_date ? `<div class="info-row"><span class="label">Next Appointment</span><span class="value">${rx.next_date}${rx.next_time ? " at " + rx.next_time : ""}</span></div>` : ""}
     ${medRows ? `<div class="section-title">Rx — Medications</div>
     <table><thead><tr><th>#</th><th>Medicine</th><th>Dosage</th><th>Frequency</th><th>Duration</th><th>Instructions</th></tr></thead>
@@ -497,176 +477,6 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen flex" style={{ background: "#f6f3f1" }}>
 
-      {/* ── RX PANEL OVERLAY ── */}
-      {rxPanelApt && (() => {
-        const apt = rxPanelApt;
-        const rx = rxForm[apt.id] ?? emptyRx();
-        const setRx = (update: Partial<FullRx>) => setRxForm(f => ({ ...f, [apt.id]: { ...rx, ...update } }));
-        return (
-          <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-stretch">
-            <div className="flex flex-col sm:flex-row flex-1 bg-white overflow-hidden max-h-[95vh] sm:max-h-screen rounded-t-2xl sm:rounded-none w-full">
-
-              {/* LEFT — Patient history sidebar (hidden on mobile, shown on sm+) */}
-              <div className="hidden sm:flex w-72 flex-shrink-0 border-r border-gray-100 flex-col bg-[#f9f9f9] overflow-hidden">
-                <div className="px-4 py-3.5 border-b border-gray-100 bg-white">
-                  <p className="font-bold text-[#191919] text-sm">Patient History</p>
-                  <p className="text-xs text-[#A3A3A3] mt-0.5">{apt.patients?.name} · {apt.patients?.phone}</p>
-                </div>
-                <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
-                  {historyLoading ? (
-                    <div className="py-10 text-center"><div className="w-5 h-5 border-2 border-[#14967F] border-t-transparent rounded-full animate-spin mx-auto"/></div>
-                  ) : patientHistory.length === 0 ? (
-                    <div className="py-10 text-center text-xs text-[#A3A3A3]">No previous visits</div>
-                  ) : patientHistory.map(h => (
-                    <div key={h.id} className="bg-white rounded-xl p-3 border border-gray-100 text-xs">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-semibold text-[#191919]">{h.date}</span>
-                        <span className="text-[#A3A3A3]">{h.time_slot}</span>
-                      </div>
-                      <p className="text-[#6b7280] mb-1">{h.service}</p>
-                      {h.problem_text && <p className="text-[#A3A3A3] italic mb-2">&quot;{h.problem_text}&quot;</p>}
-                      {(h.prescriptions ?? []).map((rx, i) => (
-                        <div key={i} className="mt-2 pt-2 border-t border-gray-50">
-                          <p className="font-medium text-[#14967F] mb-1">Dx: {rx.diagnosis}</p>
-                          {(rx.medicines ?? []).map((m, mi) => (
-                            <div key={mi} className="flex items-center justify-between py-0.5 gap-2">
-                              <span className="text-[#191919] flex-1">{m.name} <span className="text-[#A3A3A3]">{m.dosage}</span></span>
-                              <button
-                                onClick={() => {
-                                  const already = rx.medicines?.find(x => x.name === m.name);
-                                  if (already) return;
-                                  setRxForm(f => {
-                                    const cur = f[apt.id] ?? emptyRx();
-                                    return { ...f, [apt.id]: { ...cur, medicines: [...cur.medicines, { ...m }] } };
-                                  });
-                                }}
-                                className="text-[10px] text-[#14967F] border border-[#14967F]/30 rounded px-1.5 py-0.5 hover:bg-[#e8f5f2] whitespace-nowrap flex-shrink-0">
-                                + Add
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* RIGHT — Prescription form */}
-              <div className="flex-1 flex flex-col overflow-hidden">
-                {/* Header */}
-                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white flex-shrink-0">
-                  <div>
-                    <p className="font-bold text-[#191919]">Write Prescription</p>
-                    <p className="text-xs text-[#A3A3A3] mt-0.5">
-                      {apt.patients?.name} · {apt.service} · {apt.date} {apt.time_slot} · Serial #{String(apt.serial_number ?? 0).padStart(2,"0")}
-                    </p>
-                  </div>
-                  <button onClick={() => setRxPanelApt(null)} className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-[#6b7280] text-lg font-bold">×</button>
-                </div>
-
-                {/* Form */}
-                <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-                  {/* Diagnosis */}
-                  <div>
-                    <label className="block text-xs font-bold text-[#191919] mb-1.5 uppercase tracking-wide">Diagnosis *</label>
-                    <input type="text" placeholder="Primary diagnosis" value={rx.diagnosis}
-                      onChange={e => setRx({ diagnosis: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-100 focus:border-[#14967F] focus:outline-none text-sm"/>
-                  </div>
-
-                  {/* Medicines */}
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="text-xs font-bold text-[#191919] uppercase tracking-wide">Medications</label>
-                      <button onClick={() => addMedicine(apt.id)}
-                        className="text-xs text-[#14967F] border border-[#14967F]/30 rounded-lg px-2.5 py-1 hover:bg-[#e8f5f2]">
-                        + Add Row
-                      </button>
-                    </div>
-                    {rx.medicines.length === 0 ? (
-                      <div className="border-2 border-dashed border-gray-200 rounded-xl py-6 text-center text-xs text-[#A3A3A3]">
-                        No medicines added — click &ldquo;+ Add Row&rdquo; or pick from history
-                      </div>
-                    ) : (
-                      <div className="border border-gray-100 rounded-xl overflow-hidden">
-                        <table className="w-full text-xs">
-                          <thead><tr className="bg-gray-50">
-                            {["Medicine","Dosage","Frequency","Duration","Instructions",""].map(h => (
-                              <th key={h} className="px-3 py-2 text-left font-semibold text-[#A3A3A3] text-[10px] uppercase tracking-wide">{h}</th>
-                            ))}
-                          </tr></thead>
-                          <tbody className="divide-y divide-gray-50">
-                            {rx.medicines.map((m, i) => (
-                              <tr key={i}>
-                                <td className="px-2 py-1.5"><input value={m.name} onChange={e => updateMedicine(apt.id, i, "name", e.target.value)} placeholder="Medicine name" className="w-full px-2 py-1 rounded-lg border border-gray-200 focus:outline-none focus:border-[#14967F] text-xs"/></td>
-                                <td className="px-2 py-1.5"><input value={m.dosage} onChange={e => updateMedicine(apt.id, i, "dosage", e.target.value)} placeholder="500mg" className="w-full px-2 py-1 rounded-lg border border-gray-200 focus:outline-none focus:border-[#14967F] text-xs"/></td>
-                                <td className="px-2 py-1.5">
-                                  <select value={m.frequency} onChange={e => updateMedicine(apt.id, i, "frequency", e.target.value)} className="w-full px-2 py-1 rounded-lg border border-gray-200 focus:outline-none focus:border-[#14967F] text-xs bg-white">
-                                    <option value="">—</option>
-                                    {["Once daily","Twice daily","Three times daily","Four times daily","Every 6 hours","Every 8 hours","As needed","At bedtime","With meals"].map(o => <option key={o} value={o}>{o}</option>)}
-                                  </select>
-                                </td>
-                                <td className="px-2 py-1.5"><input value={m.duration} onChange={e => updateMedicine(apt.id, i, "duration", e.target.value)} placeholder="7 days" className="w-full px-2 py-1 rounded-lg border border-gray-200 focus:outline-none focus:border-[#14967F] text-xs"/></td>
-                                <td className="px-2 py-1.5"><input value={m.instructions} onChange={e => updateMedicine(apt.id, i, "instructions", e.target.value)} placeholder="After meals" className="w-full px-2 py-1 rounded-lg border border-gray-200 focus:outline-none focus:border-[#14967F] text-xs"/></td>
-                                <td className="px-2 py-1.5"><button onClick={() => removeMedicine(apt.id, i)} className="text-red-400 hover:text-red-600 font-bold text-base leading-none px-1">×</button></td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Notes + Next appt + Fee */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-[#191919] mb-1.5 uppercase tracking-wide">Notes</label>
-                      <textarea rows={3} placeholder="Additional instructions..." value={rx.notes}
-                        onChange={e => setRx({ notes: e.target.value })}
-                        className="w-full px-3 py-2 rounded-xl border-2 border-gray-100 focus:border-[#14967F] focus:outline-none text-sm resize-none"/>
-                    </div>
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-xs font-bold text-[#191919] mb-1.5 uppercase tracking-wide">Consultation Fee ($)</label>
-                        <input type="number" placeholder="0" value={rx.fee}
-                          onChange={e => setRx({ fee: e.target.value })}
-                          className="w-full px-3 py-2 rounded-xl border-2 border-gray-100 focus:border-[#14967F] focus:outline-none text-sm"/>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-[#191919] mb-1.5 uppercase tracking-wide">Next Appointment</label>
-                        <div className="flex gap-2">
-                          <input type="date" value={rx.next_date} onChange={e => setRx({ next_date: e.target.value })}
-                            className="flex-1 px-3 py-2 rounded-xl border-2 border-gray-100 focus:border-[#14967F] focus:outline-none text-sm"/>
-                          <input type="time" value={rx.next_time} onChange={e => setRx({ next_time: e.target.value })}
-                            className="w-28 px-3 py-2 rounded-xl border-2 border-gray-100 focus:border-[#14967F] focus:outline-none text-sm"/>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Footer actions */}
-                <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between gap-3 bg-white flex-shrink-0">
-                  <button onClick={() => setRxPanelApt(null)} className="px-5 py-2.5 rounded-xl border-2 border-gray-200 text-sm text-[#6b7280] hover:border-gray-300">
-                    Cancel
-                  </button>
-                  <div className="flex gap-2">
-                    <button onClick={() => { printPrescription(apt, rx); }}
-                      className="px-5 py-2.5 rounded-xl border-2 border-[#14967F] text-[#14967F] text-sm font-semibold hover:bg-[#e8f5f2]">
-                      🖨 Print
-                    </button>
-                    <button onClick={async () => { await saveRx(apt); setRxPanelApt(null); }} disabled={savingRx === apt.id || !rx.diagnosis}
-                      className="px-5 py-2.5 rounded-xl bg-[#14967F] text-white text-sm font-semibold hover:bg-[#0d7a66] disabled:opacity-40">
-                      {savingRx === apt.id ? "Saving..." : "Save Prescription"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
 
       {/* Sidebar */}
       <aside className="hidden lg:flex flex-col w-60 h-screen fixed left-0 top-0 z-30 border-r" style={{ background: "#f6f3f1", borderColor: "rgba(36,36,36,0.1)" }}>
@@ -1413,7 +1223,7 @@ export default function AdminDashboard() {
                                 className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-100 focus:outline-none focus:border-[#14967F] text-sm"/>
                             </div>
                             <div>
-                              <label className="block text-xs font-semibold text-[#797776] uppercase tracking-wide mb-1.5" style={MONO}>Consultation Fee (৳)</label>
+                              <label className="block text-xs font-semibold text-[#797776] uppercase tracking-wide mb-1.5" style={MONO}>Consultation Fee ($)</label>
                               <input type="number" value={rx?.fee ?? ""} placeholder="0"
                                 onChange={e => setRxForm(prev => ({ ...prev, [apt.id]: { ...prev[apt.id], fee: e.target.value } }))}
                                 className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-100 focus:outline-none focus:border-[#14967F] text-sm"/>
@@ -1609,7 +1419,7 @@ export default function AdminDashboard() {
               <div className="bg-white rounded-2xl overflow-hidden">
                 <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                   <h3 className="font-bold text-[#191919] text-sm">Visit Log</h3>
-                  <span className="text-xs text-[#A3A3A3]">{apts.length} appointments · ৳{totalRev.toLocaleString()}</span>
+                  <span className="text-xs text-[#A3A3A3]">{apts.length} appointments · ${totalRev.toLocaleString()}</span>
                 </div>
                 {apts.length === 0 ? (
                   <div className="py-8 text-center"><p className="text-sm text-[#A3A3A3]">No data for this period</p></div>
@@ -1633,14 +1443,14 @@ export default function AdminDashboard() {
                             <td className="px-4 py-3">
                               <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusColor[apt.status]??"bg-gray-100 text-gray-500"}`}>{statusLabel[apt.status]??apt.status}</span>
                             </td>
-                            <td className="px-4 py-3 font-bold text-[#191919]">{apt.fee ? `৳${apt.fee}` : "—"}</td>
+                            <td className="px-4 py-3 font-bold text-[#191919]">{apt.fee ? `$${apt.fee}` : "—"}</td>
                           </tr>
                         ))}
                       </tbody>
                       <tfoot className="bg-[#F4F4F5] border-t-2 border-gray-200">
                         <tr>
                           <td colSpan={5} className="px-4 py-3 font-bold text-[#191919] text-right">Total</td>
-                          <td className="px-4 py-3 font-bold text-[#14967F]">৳{totalRev.toLocaleString()}</td>
+                          <td className="px-4 py-3 font-bold text-[#14967F]">${totalRev.toLocaleString()}</td>
                         </tr>
                       </tfoot>
                     </table>
@@ -1666,9 +1476,9 @@ export default function AdminDashboard() {
                 {/* KPI top strip */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   {[
-                    { label: "Today", value: String(todayData.count), sub: `৳${todayData.revenue.toLocaleString()} revenue`, icon: "📅", color: "bg-blue-50" },
-                    { label: "This Month", value: String(thisMonthApts.length), sub: `৳${thisMonthRevenue.toLocaleString()} revenue`, icon: "🗓️", color: "bg-[#e8f5f2]" },
-                    { label: "Total Revenue", value: `৳${totalRevenue.toLocaleString()}`, sub: `${appointments.length} appointments`, icon: "💰", color: "bg-amber-50" },
+                    { label: "Today", value: String(todayData.count), sub: `$${todayData.revenue.toLocaleString()} revenue`, icon: "📅", color: "bg-blue-50" },
+                    { label: "This Month", value: String(thisMonthApts.length), sub: `$${thisMonthRevenue.toLocaleString()} revenue`, icon: "🗓️", color: "bg-[#e8f5f2]" },
+                    { label: "Total Revenue", value: `$${totalRevenue.toLocaleString()}`, sub: `${appointments.length} appointments`, icon: "💰", color: "bg-amber-50" },
                     { label: "Completion Rate", value: `${completionRate}%`, sub: `${appointments.filter(a=>a.status==="checked-out").length} completed`, icon: "✅", color: "bg-green-50" },
                   ].map((k,i) => (
                     <div key={i} className="bg-white rounded-2xl p-4 border" style={{ borderColor: "rgba(36,36,36,0.07)" }}>
@@ -1685,7 +1495,7 @@ export default function AdminDashboard() {
                   <div className="space-y-5">
                     <div className="grid sm:grid-cols-2 gap-4">
                       <CompareCard label="Today's Visits" cur={todayData.count} prev={yesterdayData.count}/>
-                      <CompareCard label="Today's Revenue" cur={todayData.revenue} prev={yesterdayData.revenue} unit="৳"/>
+                      <CompareCard label="Today's Revenue" cur={todayData.revenue} prev={yesterdayData.revenue} unit="$"/>
                     </div>
                     <div className="grid lg:grid-cols-2 gap-5">
                       <div className="bg-white rounded-2xl p-5">
@@ -1694,14 +1504,14 @@ export default function AdminDashboard() {
                       </div>
                       <div className="bg-white rounded-2xl p-5">
                         <h3 className="font-bold text-[#191919] text-sm mb-4">Revenue — Last 7 Days</h3>
-                        <BarChart data={dailyCounts.map(d => ({ label: d.label, value: d.revenue }))} colorBar="bg-[#FAD069]" valuePrefix="৳"/>
+                        <BarChart data={dailyCounts.map(d => ({ label: d.label, value: d.revenue }))} colorBar="bg-[#FAD069]" valuePrefix="$"/>
                       </div>
                     </div>
                     {/* Today's visit list */}
                     <div className="bg-white rounded-2xl overflow-hidden">
                       <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                         <h3 className="font-bold text-[#191919] text-sm">Today&apos;s Patients</h3>
-                        <span className="text-xs text-[#A3A3A3]">{todayApts.length} patients · ৳{todayData.revenue.toLocaleString()}</span>
+                        <span className="text-xs text-[#A3A3A3]">{todayApts.length} patients · ${todayData.revenue.toLocaleString()}</span>
                       </div>
                       {todayApts.length === 0 ? (
                         <div className="py-10 text-center"><p className="text-sm text-[#A3A3A3]">No patients today</p></div>
@@ -1719,14 +1529,14 @@ export default function AdminDashboard() {
                                   <td className="px-4 py-3 text-[#6b7280]">{apt.time_slot}</td>
                                   <td className="px-4 py-3 text-[#6b7280]">{apt.service}</td>
                                   <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusColor[apt.status]??"bg-gray-100 text-gray-500"}`}>{statusLabel[apt.status]??apt.status}</span></td>
-                                  <td className="px-4 py-3 font-bold text-[#191919]">{apt.fee ? `৳${apt.fee}` : "—"}</td>
+                                  <td className="px-4 py-3 font-bold text-[#191919]">{apt.fee ? `$${apt.fee}` : "—"}</td>
                                 </tr>
                               ))}
                             </tbody>
                             <tfoot className="bg-[#F4F4F5] border-t-2 border-gray-200">
                               <tr>
                                 <td colSpan={5} className="px-4 py-3 font-bold text-[#191919] text-right">Today Total</td>
-                                <td className="px-4 py-3 font-bold text-[#14967F]">৳{todayData.revenue.toLocaleString()}</td>
+                                <td className="px-4 py-3 font-bold text-[#14967F]">${todayData.revenue.toLocaleString()}</td>
                               </tr>
                             </tfoot>
                           </table>
@@ -1741,7 +1551,7 @@ export default function AdminDashboard() {
                   <div className="space-y-5">
                     <div className="grid sm:grid-cols-2 gap-4">
                       <CompareCard label="This Week's Visits" cur={thisWeek.count} prev={lastWeek.count}/>
-                      <CompareCard label="This Week's Revenue" cur={thisWeek.revenue} prev={lastWeek.revenue} unit="৳"/>
+                      <CompareCard label="This Week's Revenue" cur={thisWeek.revenue} prev={lastWeek.revenue} unit="$"/>
                     </div>
                     <div className="grid lg:grid-cols-2 gap-5">
                       <div className="bg-white rounded-2xl p-5">
@@ -1750,7 +1560,7 @@ export default function AdminDashboard() {
                       </div>
                       <div className="bg-white rounded-2xl p-5">
                         <h3 className="font-bold text-[#191919] text-sm mb-4">Revenue — Last 4 Weeks</h3>
-                        <BarChart data={weeklyCounts.map(d => ({ label: d.label, value: d.revenue }))} colorBar="bg-[#FAD069]" valuePrefix="৳"/>
+                        <BarChart data={weeklyCounts.map(d => ({ label: d.label, value: d.revenue }))} colorBar="bg-[#FAD069]" valuePrefix="$"/>
                       </div>
                     </div>
                     {(() => {
@@ -1769,7 +1579,7 @@ export default function AdminDashboard() {
                   <div className="space-y-5">
                     <div className="grid sm:grid-cols-2 gap-4">
                       <CompareCard label="This Month's Visits" cur={thisMonthApts.length} prev={prevMonthApts.length}/>
-                      <CompareCard label="This Month's Revenue" cur={thisMonthRevenue} prev={prevMonthRevenue} unit="৳"/>
+                      <CompareCard label="This Month's Revenue" cur={thisMonthRevenue} prev={prevMonthRevenue} unit="$"/>
                     </div>
                     <div className="grid lg:grid-cols-2 gap-5">
                       <div className="bg-white rounded-2xl p-5">
@@ -1778,7 +1588,7 @@ export default function AdminDashboard() {
                       </div>
                       <div className="bg-white rounded-2xl p-5">
                         <h3 className="font-bold text-[#191919] text-sm mb-4">Revenue — Last 6 Months</h3>
-                        <BarChart data={monthlyCounts.map(d => ({ label: d.label, value: d.revenue }))} colorBar="bg-[#FAD069]" valuePrefix="৳"/>
+                        <BarChart data={monthlyCounts.map(d => ({ label: d.label, value: d.revenue }))} colorBar="bg-[#FAD069]" valuePrefix="$"/>
                       </div>
                     </div>
                     <BillingTable apts={thisMonthApts} totalRev={thisMonthRevenue}/>
@@ -1790,7 +1600,7 @@ export default function AdminDashboard() {
                   <div className="space-y-5">
                     <div className="grid sm:grid-cols-2 gap-4">
                       <CompareCard label="This Year's Visits" cur={thisYear.count} prev={lastYear.count}/>
-                      <CompareCard label="This Year's Revenue" cur={thisYear.revenue} prev={lastYear.revenue} unit="৳"/>
+                      <CompareCard label="This Year's Revenue" cur={thisYear.revenue} prev={lastYear.revenue} unit="$"/>
                     </div>
                     <div className="grid lg:grid-cols-2 gap-5">
                       <div className="bg-white rounded-2xl p-5">
@@ -1799,7 +1609,7 @@ export default function AdminDashboard() {
                       </div>
                       <div className="bg-white rounded-2xl p-5">
                         <h3 className="font-bold text-[#191919] text-sm mb-4">Revenue — Last 4 Years</h3>
-                        <BarChart data={yearlyCounts.map(d => ({ label: d.label, value: d.revenue }))} colorBar="bg-[#FAD069]" valuePrefix="৳"/>
+                        <BarChart data={yearlyCounts.map(d => ({ label: d.label, value: d.revenue }))} colorBar="bg-[#FAD069]" valuePrefix="$"/>
                       </div>
                     </div>
                     <BillingTable apts={appointments.filter(a => a.date?.startsWith(`${now.getFullYear()}`))} totalRev={thisYear.revenue}/>
@@ -1826,7 +1636,7 @@ export default function AdminDashboard() {
                     <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-3 gap-2 text-center">
                       {[
                         { label:"Total Patients", value:String(patients.length) },
-                        { label:"Avg Fee", value:appointments.length>0 ? `৳${Math.round(totalRevenue/appointments.length)}` : "—" },
+                        { label:"Avg Fee", value:appointments.length>0 ? `$${Math.round(totalRevenue/appointments.length)}` : "—" },
                         { label:"Completion", value:`${completionRate}%` },
                       ].map((s,i) => (
                         <div key={i}><p className="text-lg font-bold text-[#191919]">{s.value}</p><p className="text-[10px] text-[#A3A3A3]">{s.label}</p></div>
@@ -1852,7 +1662,7 @@ export default function AdminDashboard() {
                             </div>
                             <div className="text-right ml-4 flex-shrink-0">
                               <p className="text-sm font-bold text-[#191919]">{data.count}</p>
-                              <p className="text-[10px] text-[#A3A3A3]">৳{data.revenue.toLocaleString()}</p>
+                              <p className="text-[10px] text-[#A3A3A3]">${data.revenue.toLocaleString()}</p>
                             </div>
                           </div>
                         ))}
@@ -2137,7 +1947,7 @@ export default function AdminDashboard() {
                           className="w-full bg-[#F4F4F5] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#14967F]"/>
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-[#6b7280] mb-1">Fee (৳)</label>
+                        <label className="block text-xs font-semibold text-[#6b7280] mb-1">Fee ($)</label>
                         <input type="number" value={manualAptForm.fee} placeholder="0"
                           onChange={e => setManualAptForm(f => ({...f, fee: e.target.value}))}
                           className="w-full bg-[#F4F4F5] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#14967F]"/>
@@ -2186,7 +1996,7 @@ export default function AdminDashboard() {
                             className="w-full bg-[#F4F4F5] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#14967F] resize-none"/>
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-[#6b7280] mb-1">Bill Amount (৳)</label>
+                          <label className="block text-xs font-semibold text-[#6b7280] mb-1">Bill Amount ($)</label>
                           <input type="number" value={manualRxForm.bill_amount}
                             onChange={e => setManualRxForm(f => ({...f, bill_amount: e.target.value}))}
                             placeholder="0"
@@ -2203,7 +2013,7 @@ export default function AdminDashboard() {
                         ["Date", manualAptForm.date],
                         ["Time", manualAptForm.time_slot],
                         ["Visit Type", manualAptForm.visit_type],
-                        ["Fee", manualAptForm.fee ? `৳${manualAptForm.fee}` : "—"],
+                        ["Fee", manualAptForm.fee ? `$${manualAptForm.fee}` : "—"],
                       ].map(([l,v]) => (
                         <div key={l} className="flex justify-between text-xs">
                           <span className="text-[#A3A3A3]">{l}</span>

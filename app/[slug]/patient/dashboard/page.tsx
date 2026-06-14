@@ -135,7 +135,7 @@ export default function PatientDashboard() {
     <div class="info-row"><span class="label">Phone</span><span class="value">${patient?.phone??""}</span></div>
     ${apt ? `<div class="info-row"><span class="label">Visit Date</span><span class="value">${apt.date}</span></div><div class="info-row"><span class="label">Service</span><span class="value">${apt.service}</span></div>` : ""}
     <div class="info-row"><span class="label">Diagnosis</span><span class="value">${rx.diagnosis}</span></div>
-    ${rx.fee ? `<div class="info-row"><span class="label">Fee</span><span class="value">৳${rx.fee}</span></div>` : ""}
+    ${rx.fee ? `<div class="info-row"><span class="label">Fee</span><span class="value">$${rx.fee}</span></div>` : ""}
     ${rx.next_appointment_date ? `<div class="info-row"><span class="label">Next Appointment</span><span class="value">${rx.next_appointment_date}${rx.next_appointment_time?" at "+rx.next_appointment_time:""}</span></div>` : ""}
     ${medRows ? `<div class="section-title">Rx — Medications</div><table><thead><tr><th>#</th><th>Medicine</th><th>Dosage</th><th>Frequency</th><th>Duration</th><th>Instructions</th></tr></thead><tbody>${medRows}</tbody></table>` : ""}
     ${rx.notes ? `<div class="section-title">Notes</div><div class="notes-box">${rx.notes}</div>` : ""}
@@ -369,7 +369,7 @@ export default function PatientDashboard() {
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
                             {rx.fee ? (
-                              <span className="bg-amber-50 text-amber-700 text-xs font-bold px-2.5 py-1 rounded-full">৳{rx.fee}</span>
+                              <span className="bg-amber-50 text-amber-700 text-xs font-bold px-2.5 py-1 rounded-full">${rx.fee}</span>
                             ) : null}
                             <button
                               onClick={() => printRx(rx)}

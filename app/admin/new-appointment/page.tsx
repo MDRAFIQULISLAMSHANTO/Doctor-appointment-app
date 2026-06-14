@@ -4,6 +4,22 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { MedicineAutocomplete } from "@/components/MedicineAutocomplete";
+
+// Current date (YYYY-MM-DD) and time (e.g. "10:30 AM") for default inputs.
+function todayISO(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function nowSlot(): string {
+  const d = new Date();
+  let h = d.getHours();
+  const m = d.getMinutes();
+  const period = h >= 12 ? "PM" : "AM";
+  h = h % 12 || 12;
+  const rounded = m < 30 ? "00" : "30";
+  return `${h}:${rounded} ${period}`;
+}
 
 type Doctor = {
   id: string; name: string; specialty?: string; hospital?: string; services?: string[];
@@ -32,7 +48,7 @@ export default function NewAppointmentPage() {
 
   // Appointment
   const [apt, setApt] = useState({
-    date: "", time_slot: "", service: "", visit_type: "in-person",
+    date: todayISO(), time_slot: nowSlot(), service: "", visit_type: "in-person",
     fee: "", problem: "", notes: "",
   });
 
@@ -214,7 +230,7 @@ export default function NewAppointmentPage() {
     <thead><tr><th>Medication</th><th>Dose</th><th>Frequency</th><th>Duration</th></tr></thead>
     <tbody>${medications.map(m => `<tr><td><strong>${m.name}</strong></td><td>${m.dose}</td><td>${m.frequency}</td><td>${m.duration}</td></tr>`).join("")}</tbody>
   </table>` : ""}
-  ${rx.bill_amount ? `<div style="margin-top:12px;text-align:right;font-size:14px;font-weight:700;">Bill: ৳${rx.bill_amount}</div>` : ""}
+  ${rx.bill_amount ? `<div style="margin-top:12px;text-align:right;font-size:14px;font-weight:700;">Bill: $${rx.bill_amount}</div>` : ""}
 </div>
 
 <div class="footer">
@@ -256,7 +272,7 @@ export default function NewAppointmentPage() {
                 ["Patient", foundPatient?.name ?? newPatient.name ?? "—"],
                 ["Date", success.appointment.date],
                 ["Time", success.appointment.time_slot],
-                ["Fee", apt.fee ? `৳${apt.fee}` : "—"],
+                ["Fee", apt.fee ? `$${apt.fee}` : "—"],
               ].map(([l,v]) => (
                 <div key={l} className="flex justify-between text-sm">
                   <span className="text-[#A3A3A3]">{l}</span>
@@ -524,7 +540,7 @@ export default function NewAppointmentPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#6b7280] mb-1.5">Consultation Fee (৳)</label>
+                <label className="block text-xs font-semibold text-[#6b7280] mb-1.5">Consultation Fee ($)</label>
                 <input
                   type="number"
                   value={apt.fee}
@@ -604,11 +620,10 @@ export default function NewAppointmentPage() {
                 <div className="bg-[#F4F4F5] rounded-2xl p-4 space-y-3">
                   <div className="grid grid-cols-2 gap-2">
                     <div className="col-span-2">
-                      <input
-                        type="text"
+                      <MedicineAutocomplete
                         value={newMed.name}
-                        onChange={e => setNewMed(m => ({...m, name: e.target.value}))}
-                        placeholder="Medicine name"
+                        onChange={v => setNewMed(m => ({...m, name: v}))}
+                        placeholder="Medicine name (type to search)"
                         className="w-full bg-white rounded-xl px-3 py-2.5 text-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#14967F]"
                       />
                     </div>
@@ -642,7 +657,7 @@ export default function NewAppointmentPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#6b7280] mb-1.5">Bill Amount (৳)</label>
+                <label className="block text-xs font-semibold text-[#6b7280] mb-1.5">Bill Amount ($)</label>
                 <input
                   type="number"
                   value={rx.bill_amount}

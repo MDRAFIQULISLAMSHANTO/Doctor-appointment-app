@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { MedicineAutocomplete } from "@/components/MedicineAutocomplete";
 
 const SERIF = { fontFamily: "'Noto Serif', ui-serif, Georgia, serif", letterSpacing: "-0.02em" } as const;
 const MONO = { fontFamily: "'IBM Plex Mono', ui-monospace, monospace" } as const;
@@ -182,6 +183,10 @@ export default function CheckinPage() {
     </div>
   );
 
+  const historyMedicineNames = Array.from(new Set(
+    history.flatMap(h => (h.prescriptions ?? []).flatMap(p => (p.medicines ?? []).map(m => m.name))).filter(Boolean)
+  ));
+
   const filteredHistory = history.filter(h =>
     !historySearch || (h.prescriptions ?? []).some(p =>
       p.diagnosis?.toLowerCase().includes(historySearch.toLowerCase()) ||
@@ -334,7 +339,11 @@ export default function CheckinPage() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                           <div>
                             <label className="block text-[10px] font-bold text-[#A3A3A3] uppercase tracking-wide mb-1">Medicine Name *</label>
-                            <input value={m.name} onChange={e => updateMed(i, "name", e.target.value)} placeholder="e.g. Amlodipine"
+                            <MedicineAutocomplete
+                              value={m.name}
+                              onChange={v => updateMed(i, "name", v)}
+                              placeholder="e.g. Amlodipine"
+                              extraSuggestions={historyMedicineNames}
                               className="w-full px-3 py-2 rounded-xl border-2 border-gray-100 focus:border-[#14967F] focus:outline-none text-sm"/>
                           </div>
                           <div>

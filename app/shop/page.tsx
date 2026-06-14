@@ -89,7 +89,7 @@ export default function ShopPage() {
                   <p className="text-sm text-[#A3A3A3] leading-relaxed mb-4">{product.desc}</p>
                   <p className="text-xs text-[#A3A3A3] mb-4">{product.sold} sold</p>
                   <div className="flex items-center justify-between">
-                    <p className="text-xl font-bold text-[#191919]">৳ {product.price}</p>
+                    <p className="text-xl font-bold text-[#191919]">$ {product.price}</p>
                     <button
                       onClick={() => addToCart(product.id)}
                       className={`rounded-full px-5 py-2 text-sm font-medium transition-colors ${
