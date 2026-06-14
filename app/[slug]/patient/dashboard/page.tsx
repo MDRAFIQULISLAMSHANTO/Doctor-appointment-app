@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { currencySymbol } from "@/lib/currency";
 
 const NAV = [
   { label: "Dashboard", icon: "⊞" },
@@ -36,7 +37,7 @@ type Prescription = {
   doctors?: { name: string; specialty: string; hospital?: string; phone?: string };
 };
 type PatientProfile = { id: string; name: string; phone: string; age?: number; gender?: string };
-type Doctor = { id: string; name: string; specialty: string; hospital?: string; slug: string };
+type Doctor = { id: string; name: string; specialty: string; hospital?: string; slug: string; currency?: string };
 
 export default function PatientDashboard() {
   const params = useParams();
@@ -52,6 +53,8 @@ export default function PatientDashboard() {
   const [settingsName, setSettingsName] = useState("");
   const [savingName, setSavingName] = useState(false);
 
+  const cur = currencySymbol(doctor?.currency);
+
   const loadData = useCallback(async () => {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
@@ -59,7 +62,7 @@ export default function PatientDashboard() {
 
     const [patRes, docRes] = await Promise.all([
       supabase.from("patients").select("id, name, phone, age, gender").eq("user_id", user.id).single(),
-      supabase.from("doctors").select("id, name, specialty, hospital, slug").eq("slug", slug).single(),
+      supabase.from("doctors").select("id, name, specialty, hospital, slug, currency").eq("slug", slug).single(),
     ]);
 
     if (!patRes.data) { window.location.href = `/${slug}/login`; return; }
@@ -135,7 +138,7 @@ export default function PatientDashboard() {
     <div class="info-row"><span class="label">Phone</span><span class="value">${patient?.phone??""}</span></div>
     ${apt ? `<div class="info-row"><span class="label">Visit Date</span><span class="value">${apt.date}</span></div><div class="info-row"><span class="label">Service</span><span class="value">${apt.service}</span></div>` : ""}
     <div class="info-row"><span class="label">Diagnosis</span><span class="value">${rx.diagnosis}</span></div>
-    ${rx.fee ? `<div class="info-row"><span class="label">Fee</span><span class="value">$${rx.fee}</span></div>` : ""}
+    ${rx.fee ? `<div class="info-row"><span class="label">Fee</span><span class="value">${cur}${rx.fee}</span></div>` : ""}
     ${rx.next_appointment_date ? `<div class="info-row"><span class="label">Next Appointment</span><span class="value">${rx.next_appointment_date}${rx.next_appointment_time?" at "+rx.next_appointment_time:""}</span></div>` : ""}
     ${medRows ? `<div class="section-title">Rx — Medications</div><table><thead><tr><th>#</th><th>Medicine</th><th>Dosage</th><th>Frequency</th><th>Duration</th><th>Instructions</th></tr></thead><tbody>${medRows}</tbody></table>` : ""}
     ${rx.notes ? `<div class="section-title">Notes</div><div class="notes-box">${rx.notes}</div>` : ""}
@@ -369,7 +372,7 @@ export default function PatientDashboard() {
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
                             {rx.fee ? (
-                              <span className="bg-amber-50 text-amber-700 text-xs font-bold px-2.5 py-1 rounded-full">${rx.fee}</span>
+                              <span className="bg-amber-50 text-amber-700 text-xs font-bold px-2.5 py-1 rounded-full">{cur}{rx.fee}</span>
                             ) : null}
                             <button
                               onClick={() => printRx(rx)}

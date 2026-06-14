@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { MedicineAutocomplete } from "@/components/MedicineAutocomplete";
+import { currencySymbol } from "@/lib/currency";
 
 const SERIF = { fontFamily: "'Noto Serif', ui-serif, Georgia, serif", letterSpacing: "-0.02em" } as const;
 const MONO = { fontFamily: "'IBM Plex Mono', ui-monospace, monospace" } as const;
@@ -32,7 +33,7 @@ export default function CheckinPage() {
   const supabase = createClient();
 
   const [apt, setApt] = useState<Appointment | null>(null);
-  const [doctor, setDoctor] = useState<{ id: string; name: string } | null>(null);
+  const [doctor, setDoctor] = useState<{ id: string; name: string; currency?: string } | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [stage, setStage] = useState(0);
@@ -42,11 +43,13 @@ export default function CheckinPage() {
   const [error, setError] = useState("");
   const [historySearch, setHistorySearch] = useState("");
 
+  const cur = currencySymbol(doctor?.currency);
+
   const load = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.push("/admin/login"); return; }
 
-    const { data: doc } = await supabase.from("doctors").select("id, name").eq("user_id", user.id).single();
+    const { data: doc } = await supabase.from("doctors").select("id, name, currency").eq("user_id", user.id).single();
     if (!doc) { router.push("/admin/login"); return; }
     setDoctor(doc);
 
@@ -143,7 +146,7 @@ export default function CheckinPage() {
     <div class="info-row"><span class="label">Date</span><span class="value">${apt.date}</span></div>
     <div class="info-row"><span class="label">Serial</span><span class="value">#${String(apt.serial_number ?? 0).padStart(2,"0")}</span></div>
     <div class="info-row"><span class="label">Diagnosis</span><span class="value">${rx.diagnosis}</span></div>
-    ${rx.fee ? `<div class="info-row"><span class="label">Fee</span><span class="value">$${rx.fee}</span></div>` : ""}
+    ${rx.fee ? `<div class="info-row"><span class="label">Fee</span><span class="value">${cur}${rx.fee}</span></div>` : ""}
     ${rx.next_date ? `<div class="info-row"><span class="label">Next Visit</span><span class="value">${rx.next_date}${rx.next_time ? " at " + rx.next_time : ""}</span></div>` : ""}
     ${medRows ? `<div class="section-title">Rx — Medications</div>
     <table><thead><tr><th>#</th><th>Medicine</th><th>Dosage</th><th>Frequency</th><th>Duration</th><th>Instructions</th></tr></thead>
@@ -392,7 +395,7 @@ export default function CheckinPage() {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-bold text-[#191919] mb-1.5 uppercase tracking-wide">Consultation Fee ($)</label>
+                      <label className="block text-xs font-bold text-[#191919] mb-1.5 uppercase tracking-wide">Consultation Fee ({cur})</label>
                       <input type="number" placeholder="0" value={rx.fee}
                         onChange={e => setRx(r => ({ ...r, fee: e.target.value }))}
                         className="w-full px-4 py-3 rounded-xl border-2 border-gray-100 focus:border-[#14967F] focus:outline-none text-sm"/>
@@ -450,7 +453,7 @@ export default function CheckinPage() {
                   {(rx.notes || rx.fee || rx.next_date) && (
                     <div className="px-6 py-4 space-y-1.5 text-sm">
                       {rx.notes && <p><span className="text-[#A3A3A3]">Notes: </span>{rx.notes}</p>}
-                      {rx.fee && <p><span className="text-[#A3A3A3]">Fee: </span><strong>${rx.fee}</strong></p>}
+                      {rx.fee && <p><span className="text-[#A3A3A3]">Fee: </span><strong>{cur}{rx.fee}</strong></p>}
                       {rx.next_date && <p><span className="text-[#A3A3A3]">Next Visit: </span>{rx.next_date}{rx.next_time ? ` at ${rx.next_time}` : ""}</p>}
                     </div>
                   )}

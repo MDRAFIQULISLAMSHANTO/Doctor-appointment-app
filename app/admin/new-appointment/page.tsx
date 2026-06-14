@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { MedicineAutocomplete } from "@/components/MedicineAutocomplete";
+import { currencySymbol } from "@/lib/currency";
 
 // Current date (YYYY-MM-DD) and time (e.g. "10:30 AM") for default inputs.
 function todayISO(): string {
@@ -22,7 +23,7 @@ function nowSlot(): string {
 }
 
 type Doctor = {
-  id: string; name: string; specialty?: string; hospital?: string; services?: string[];
+  id: string; name: string; specialty?: string; hospital?: string; services?: string[]; currency?: string;
 };
 type FoundPatient = {
   id: string; name: string; phone: string; age?: number; gender?: string; has_portal_access?: boolean;
@@ -72,7 +73,7 @@ export default function NewAppointmentPage() {
       if (!user) { router.replace("/admin/login"); return; }
       const { data: doc } = await supabase
         .from("doctors")
-        .select("id, name, specialty, hospital, services")
+        .select("id, name, specialty, hospital, services, currency")
         .eq("user_id", user.id).single();
       if (!doc) { router.replace("/admin/login"); return; }
       const d = doc as Doctor;
@@ -83,6 +84,8 @@ export default function NewAppointmentPage() {
     };
     init();
   }, []);
+
+  const cur = currencySymbol(doctor?.currency);
 
   const searchPatient = async () => {
     const phone = phoneInput.replace(/\D/g, "");
@@ -230,7 +233,7 @@ export default function NewAppointmentPage() {
     <thead><tr><th>Medication</th><th>Dose</th><th>Frequency</th><th>Duration</th></tr></thead>
     <tbody>${medications.map(m => `<tr><td><strong>${m.name}</strong></td><td>${m.dose}</td><td>${m.frequency}</td><td>${m.duration}</td></tr>`).join("")}</tbody>
   </table>` : ""}
-  ${rx.bill_amount ? `<div style="margin-top:12px;text-align:right;font-size:14px;font-weight:700;">Bill: $${rx.bill_amount}</div>` : ""}
+  ${rx.bill_amount ? `<div style="margin-top:12px;text-align:right;font-size:14px;font-weight:700;">Bill: ${cur}${rx.bill_amount}</div>` : ""}
 </div>
 
 <div class="footer">
@@ -272,7 +275,7 @@ export default function NewAppointmentPage() {
                 ["Patient", foundPatient?.name ?? newPatient.name ?? "—"],
                 ["Date", success.appointment.date],
                 ["Time", success.appointment.time_slot],
-                ["Fee", apt.fee ? `$${apt.fee}` : "—"],
+                ["Fee", apt.fee ? `${cur}${apt.fee}` : "—"],
               ].map(([l,v]) => (
                 <div key={l} className="flex justify-between text-sm">
                   <span className="text-[#A3A3A3]">{l}</span>
@@ -540,7 +543,7 @@ export default function NewAppointmentPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#6b7280] mb-1.5">Consultation Fee ($)</label>
+                <label className="block text-xs font-semibold text-[#6b7280] mb-1.5">Consultation Fee ({cur})</label>
                 <input
                   type="number"
                   value={apt.fee}
@@ -657,7 +660,7 @@ export default function NewAppointmentPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#6b7280] mb-1.5">Bill Amount ($)</label>
+                <label className="block text-xs font-semibold text-[#6b7280] mb-1.5">Bill Amount ({cur})</label>
                 <input
                   type="number"
                   value={rx.bill_amount}

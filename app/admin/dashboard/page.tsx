@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect, useCallback, Fragment } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { CURRENCIES, currencySymbol } from "@/lib/currency";
 
 const NAV = [
   { label: "Dashboard", icon: "⊞" },
@@ -111,6 +112,7 @@ type Doctor = {
   services?: string[];
   plan?: string;
   features?: Record<string, unknown>;
+  currency?: string;
 };
 
 export default function AdminDashboard() {
@@ -127,7 +129,7 @@ export default function AdminDashboard() {
   const [editAptForm, setEditAptForm] = useState({ date: "", time_slot: "" });
   const [savingEdit, setSavingEdit] = useState<string | null>(null);
   const [reportTab, setReportTab] = useState<"daily" | "weekly" | "monthly" | "yearly">("daily");
-  const [settingsForm, setSettingsForm] = useState({ name: "", specialty: "", phone: "", hospital: "", address: "", bio: "" });
+  const [settingsForm, setSettingsForm] = useState({ name: "", specialty: "", phone: "", hospital: "", address: "", bio: "", currency: "USD" });
   const [savingSettings, setSavingSettings] = useState(false);
   const [schedule, setSchedule] = useState<ScheduleDay[]>([]);
   const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([]);
@@ -160,13 +162,13 @@ export default function AdminDashboard() {
 
     const { data: doc } = await supabase
       .from("doctors")
-      .select("id, slug, name, specialty, email, phone, hospital, address, city, bio, hours, services, plan, features")
+      .select("id, slug, name, specialty, email, phone, hospital, address, city, bio, hours, services, plan, features, currency")
       .eq("user_id", user.id)
       .single();
 
     if (!doc) { window.location.href = "/admin/login"; return; }
     setDoctor(doc);
-    setSettingsForm({ name: doc.name, specialty: doc.specialty, phone: doc.phone ?? "", hospital: doc.hospital ?? "", address: doc.address ?? "", bio: doc.bio ?? "" });
+    setSettingsForm({ name: doc.name, specialty: doc.specialty, phone: doc.phone ?? "", hospital: doc.hospital ?? "", address: doc.address ?? "", bio: doc.bio ?? "", currency: doc.currency ?? "USD" });
 
     // Load schedule
     const [schedRes, blockedRes] = await Promise.all([
@@ -303,6 +305,7 @@ export default function AdminDashboard() {
       hospital: settingsForm.hospital,
       address: settingsForm.address,
       bio: settingsForm.bio,
+      currency: settingsForm.currency,
     }).eq("id", doctor.id);
     setDoctor(d => d ? { ...d, ...settingsForm } : d);
     setSavingSettings(false);
@@ -435,7 +438,7 @@ export default function AdminDashboard() {
     <div class="info-row"><span class="label">Visit Date</span><span class="value">${apt.date}</span></div>
     <div class="info-row"><span class="label">Service</span><span class="value">${apt.service}</span></div>
     <div class="info-row"><span class="label">Diagnosis</span><span class="value">${rx.diagnosis}</span></div>
-    ${rx.fee ? `<div class="info-row"><span class="label">Consultation Fee</span><span class="value">$${rx.fee}</span></div>` : ""}
+    ${rx.fee ? `<div class="info-row"><span class="label">Consultation Fee</span><span class="value">${cur}${rx.fee}</span></div>` : ""}
     ${rx.next_date ? `<div class="info-row"><span class="label">Next Appointment</span><span class="value">${rx.next_date}${rx.next_time ? " at " + rx.next_time : ""}</span></div>` : ""}
     ${medRows ? `<div class="section-title">Rx — Medications</div>
     <table><thead><tr><th>#</th><th>Medicine</th><th>Dosage</th><th>Frequency</th><th>Duration</th><th>Instructions</th></tr></thead>
@@ -448,6 +451,7 @@ export default function AdminDashboard() {
   };
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  const cur = currencySymbol(doctor?.currency);
 
   const stats = {
     total: appointments.length,
@@ -1223,7 +1227,7 @@ export default function AdminDashboard() {
                                 className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-100 focus:outline-none focus:border-[#14967F] text-sm"/>
                             </div>
                             <div>
-                              <label className="block text-xs font-semibold text-[#797776] uppercase tracking-wide mb-1.5" style={MONO}>Consultation Fee ($)</label>
+                              <label className="block text-xs font-semibold text-[#797776] uppercase tracking-wide mb-1.5" style={MONO}>Consultation Fee ({cur})</label>
                               <input type="number" value={rx?.fee ?? ""} placeholder="0"
                                 onChange={e => setRxForm(prev => ({ ...prev, [apt.id]: { ...prev[apt.id], fee: e.target.value } }))}
                                 className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-100 focus:outline-none focus:border-[#14967F] text-sm"/>
@@ -1419,7 +1423,7 @@ export default function AdminDashboard() {
               <div className="bg-white rounded-2xl overflow-hidden">
                 <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                   <h3 className="font-bold text-[#191919] text-sm">Visit Log</h3>
-                  <span className="text-xs text-[#A3A3A3]">{apts.length} appointments · ${totalRev.toLocaleString()}</span>
+                  <span className="text-xs text-[#A3A3A3]">{apts.length} appointments · {cur}{totalRev.toLocaleString()}</span>
                 </div>
                 {apts.length === 0 ? (
                   <div className="py-8 text-center"><p className="text-sm text-[#A3A3A3]">No data for this period</p></div>
@@ -1443,14 +1447,14 @@ export default function AdminDashboard() {
                             <td className="px-4 py-3">
                               <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusColor[apt.status]??"bg-gray-100 text-gray-500"}`}>{statusLabel[apt.status]??apt.status}</span>
                             </td>
-                            <td className="px-4 py-3 font-bold text-[#191919]">{apt.fee ? `$${apt.fee}` : "—"}</td>
+                            <td className="px-4 py-3 font-bold text-[#191919]">{apt.fee ? `${cur}${apt.fee}` : "—"}</td>
                           </tr>
                         ))}
                       </tbody>
                       <tfoot className="bg-[#F4F4F5] border-t-2 border-gray-200">
                         <tr>
                           <td colSpan={5} className="px-4 py-3 font-bold text-[#191919] text-right">Total</td>
-                          <td className="px-4 py-3 font-bold text-[#14967F]">${totalRev.toLocaleString()}</td>
+                          <td className="px-4 py-3 font-bold text-[#14967F]">{cur}{totalRev.toLocaleString()}</td>
                         </tr>
                       </tfoot>
                     </table>
@@ -1476,9 +1480,9 @@ export default function AdminDashboard() {
                 {/* KPI top strip */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   {[
-                    { label: "Today", value: String(todayData.count), sub: `$${todayData.revenue.toLocaleString()} revenue`, icon: "📅", color: "bg-blue-50" },
-                    { label: "This Month", value: String(thisMonthApts.length), sub: `$${thisMonthRevenue.toLocaleString()} revenue`, icon: "🗓️", color: "bg-[#e8f5f2]" },
-                    { label: "Total Revenue", value: `$${totalRevenue.toLocaleString()}`, sub: `${appointments.length} appointments`, icon: "💰", color: "bg-amber-50" },
+                    { label: "Today", value: String(todayData.count), sub: `${cur}${todayData.revenue.toLocaleString()} revenue`, icon: "📅", color: "bg-blue-50" },
+                    { label: "This Month", value: String(thisMonthApts.length), sub: `${cur}${thisMonthRevenue.toLocaleString()} revenue`, icon: "🗓️", color: "bg-[#e8f5f2]" },
+                    { label: "Total Revenue", value: `${cur}${totalRevenue.toLocaleString()}`, sub: `${appointments.length} appointments`, icon: "💰", color: "bg-amber-50" },
                     { label: "Completion Rate", value: `${completionRate}%`, sub: `${appointments.filter(a=>a.status==="checked-out").length} completed`, icon: "✅", color: "bg-green-50" },
                   ].map((k,i) => (
                     <div key={i} className="bg-white rounded-2xl p-4 border" style={{ borderColor: "rgba(36,36,36,0.07)" }}>
@@ -1495,7 +1499,7 @@ export default function AdminDashboard() {
                   <div className="space-y-5">
                     <div className="grid sm:grid-cols-2 gap-4">
                       <CompareCard label="Today's Visits" cur={todayData.count} prev={yesterdayData.count}/>
-                      <CompareCard label="Today's Revenue" cur={todayData.revenue} prev={yesterdayData.revenue} unit="$"/>
+                      <CompareCard label="Today's Revenue" cur={todayData.revenue} prev={yesterdayData.revenue} unit={cur}/>
                     </div>
                     <div className="grid lg:grid-cols-2 gap-5">
                       <div className="bg-white rounded-2xl p-5">
@@ -1504,14 +1508,14 @@ export default function AdminDashboard() {
                       </div>
                       <div className="bg-white rounded-2xl p-5">
                         <h3 className="font-bold text-[#191919] text-sm mb-4">Revenue — Last 7 Days</h3>
-                        <BarChart data={dailyCounts.map(d => ({ label: d.label, value: d.revenue }))} colorBar="bg-[#FAD069]" valuePrefix="$"/>
+                        <BarChart data={dailyCounts.map(d => ({ label: d.label, value: d.revenue }))} colorBar="bg-[#FAD069]" valuePrefix={cur}/>
                       </div>
                     </div>
                     {/* Today's visit list */}
                     <div className="bg-white rounded-2xl overflow-hidden">
                       <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                         <h3 className="font-bold text-[#191919] text-sm">Today&apos;s Patients</h3>
-                        <span className="text-xs text-[#A3A3A3]">{todayApts.length} patients · ${todayData.revenue.toLocaleString()}</span>
+                        <span className="text-xs text-[#A3A3A3]">{todayApts.length} patients · {cur}{todayData.revenue.toLocaleString()}</span>
                       </div>
                       {todayApts.length === 0 ? (
                         <div className="py-10 text-center"><p className="text-sm text-[#A3A3A3]">No patients today</p></div>
@@ -1529,14 +1533,14 @@ export default function AdminDashboard() {
                                   <td className="px-4 py-3 text-[#6b7280]">{apt.time_slot}</td>
                                   <td className="px-4 py-3 text-[#6b7280]">{apt.service}</td>
                                   <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusColor[apt.status]??"bg-gray-100 text-gray-500"}`}>{statusLabel[apt.status]??apt.status}</span></td>
-                                  <td className="px-4 py-3 font-bold text-[#191919]">{apt.fee ? `$${apt.fee}` : "—"}</td>
+                                  <td className="px-4 py-3 font-bold text-[#191919]">{apt.fee ? `${cur}${apt.fee}` : "—"}</td>
                                 </tr>
                               ))}
                             </tbody>
                             <tfoot className="bg-[#F4F4F5] border-t-2 border-gray-200">
                               <tr>
                                 <td colSpan={5} className="px-4 py-3 font-bold text-[#191919] text-right">Today Total</td>
-                                <td className="px-4 py-3 font-bold text-[#14967F]">${todayData.revenue.toLocaleString()}</td>
+                                <td className="px-4 py-3 font-bold text-[#14967F]">{cur}{todayData.revenue.toLocaleString()}</td>
                               </tr>
                             </tfoot>
                           </table>
@@ -1551,7 +1555,7 @@ export default function AdminDashboard() {
                   <div className="space-y-5">
                     <div className="grid sm:grid-cols-2 gap-4">
                       <CompareCard label="This Week's Visits" cur={thisWeek.count} prev={lastWeek.count}/>
-                      <CompareCard label="This Week's Revenue" cur={thisWeek.revenue} prev={lastWeek.revenue} unit="$"/>
+                      <CompareCard label="This Week's Revenue" cur={thisWeek.revenue} prev={lastWeek.revenue} unit={cur}/>
                     </div>
                     <div className="grid lg:grid-cols-2 gap-5">
                       <div className="bg-white rounded-2xl p-5">
@@ -1560,7 +1564,7 @@ export default function AdminDashboard() {
                       </div>
                       <div className="bg-white rounded-2xl p-5">
                         <h3 className="font-bold text-[#191919] text-sm mb-4">Revenue — Last 4 Weeks</h3>
-                        <BarChart data={weeklyCounts.map(d => ({ label: d.label, value: d.revenue }))} colorBar="bg-[#FAD069]" valuePrefix="$"/>
+                        <BarChart data={weeklyCounts.map(d => ({ label: d.label, value: d.revenue }))} colorBar="bg-[#FAD069]" valuePrefix={cur}/>
                       </div>
                     </div>
                     {(() => {
@@ -1579,7 +1583,7 @@ export default function AdminDashboard() {
                   <div className="space-y-5">
                     <div className="grid sm:grid-cols-2 gap-4">
                       <CompareCard label="This Month's Visits" cur={thisMonthApts.length} prev={prevMonthApts.length}/>
-                      <CompareCard label="This Month's Revenue" cur={thisMonthRevenue} prev={prevMonthRevenue} unit="$"/>
+                      <CompareCard label="This Month's Revenue" cur={thisMonthRevenue} prev={prevMonthRevenue} unit={cur}/>
                     </div>
                     <div className="grid lg:grid-cols-2 gap-5">
                       <div className="bg-white rounded-2xl p-5">
@@ -1588,7 +1592,7 @@ export default function AdminDashboard() {
                       </div>
                       <div className="bg-white rounded-2xl p-5">
                         <h3 className="font-bold text-[#191919] text-sm mb-4">Revenue — Last 6 Months</h3>
-                        <BarChart data={monthlyCounts.map(d => ({ label: d.label, value: d.revenue }))} colorBar="bg-[#FAD069]" valuePrefix="$"/>
+                        <BarChart data={monthlyCounts.map(d => ({ label: d.label, value: d.revenue }))} colorBar="bg-[#FAD069]" valuePrefix={cur}/>
                       </div>
                     </div>
                     <BillingTable apts={thisMonthApts} totalRev={thisMonthRevenue}/>
@@ -1600,7 +1604,7 @@ export default function AdminDashboard() {
                   <div className="space-y-5">
                     <div className="grid sm:grid-cols-2 gap-4">
                       <CompareCard label="This Year's Visits" cur={thisYear.count} prev={lastYear.count}/>
-                      <CompareCard label="This Year's Revenue" cur={thisYear.revenue} prev={lastYear.revenue} unit="$"/>
+                      <CompareCard label="This Year's Revenue" cur={thisYear.revenue} prev={lastYear.revenue} unit={cur}/>
                     </div>
                     <div className="grid lg:grid-cols-2 gap-5">
                       <div className="bg-white rounded-2xl p-5">
@@ -1609,7 +1613,7 @@ export default function AdminDashboard() {
                       </div>
                       <div className="bg-white rounded-2xl p-5">
                         <h3 className="font-bold text-[#191919] text-sm mb-4">Revenue — Last 4 Years</h3>
-                        <BarChart data={yearlyCounts.map(d => ({ label: d.label, value: d.revenue }))} colorBar="bg-[#FAD069]" valuePrefix="$"/>
+                        <BarChart data={yearlyCounts.map(d => ({ label: d.label, value: d.revenue }))} colorBar="bg-[#FAD069]" valuePrefix={cur}/>
                       </div>
                     </div>
                     <BillingTable apts={appointments.filter(a => a.date?.startsWith(`${now.getFullYear()}`))} totalRev={thisYear.revenue}/>
@@ -1636,7 +1640,7 @@ export default function AdminDashboard() {
                     <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-3 gap-2 text-center">
                       {[
                         { label:"Total Patients", value:String(patients.length) },
-                        { label:"Avg Fee", value:appointments.length>0 ? `$${Math.round(totalRevenue/appointments.length)}` : "—" },
+                        { label:"Avg Fee", value:appointments.length>0 ? `${cur}${Math.round(totalRevenue/appointments.length)}` : "—" },
                         { label:"Completion", value:`${completionRate}%` },
                       ].map((s,i) => (
                         <div key={i}><p className="text-lg font-bold text-[#191919]">{s.value}</p><p className="text-[10px] text-[#A3A3A3]">{s.label}</p></div>
@@ -1662,7 +1666,7 @@ export default function AdminDashboard() {
                             </div>
                             <div className="text-right ml-4 flex-shrink-0">
                               <p className="text-sm font-bold text-[#191919]">{data.count}</p>
-                              <p className="text-[10px] text-[#A3A3A3]">${data.revenue.toLocaleString()}</p>
+                              <p className="text-[10px] text-[#A3A3A3]">{cur}{data.revenue.toLocaleString()}</p>
                             </div>
                           </div>
                         ))}
@@ -1706,6 +1710,16 @@ export default function AdminDashboard() {
                   <label className="block text-sm font-semibold text-[#191919] mb-1.5">Address</label>
                   <input type="text" value={settingsForm.address} onChange={e => setSettingsForm(f => ({...f, address: e.target.value}))}
                     className="w-full px-4 py-3 rounded-xl border-2 border-gray-100 focus:outline-none focus:border-[#14967F] text-sm"/>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-[#191919] mb-1.5">Currency</label>
+                  <select value={settingsForm.currency} onChange={e => setSettingsForm(f => ({...f, currency: e.target.value}))}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-100 focus:outline-none focus:border-[#14967F] text-sm bg-white">
+                    {CURRENCIES.map(c => (
+                      <option key={c.code} value={c.code}>{c.symbol} — {c.label} ({c.code})</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-[#A3A3A3] mt-1">Used for all fees, bills, and prescriptions shown to you and your patients.</p>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-[#191919] mb-1.5">Bio</label>
@@ -1947,7 +1961,7 @@ export default function AdminDashboard() {
                           className="w-full bg-[#F4F4F5] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#14967F]"/>
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-[#6b7280] mb-1">Fee ($)</label>
+                        <label className="block text-xs font-semibold text-[#6b7280] mb-1">Fee ({cur})</label>
                         <input type="number" value={manualAptForm.fee} placeholder="0"
                           onChange={e => setManualAptForm(f => ({...f, fee: e.target.value}))}
                           className="w-full bg-[#F4F4F5] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#14967F]"/>
@@ -1996,7 +2010,7 @@ export default function AdminDashboard() {
                             className="w-full bg-[#F4F4F5] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#14967F] resize-none"/>
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-[#6b7280] mb-1">Bill Amount ($)</label>
+                          <label className="block text-xs font-semibold text-[#6b7280] mb-1">Bill Amount ({cur})</label>
                           <input type="number" value={manualRxForm.bill_amount}
                             onChange={e => setManualRxForm(f => ({...f, bill_amount: e.target.value}))}
                             placeholder="0"
@@ -2013,7 +2027,7 @@ export default function AdminDashboard() {
                         ["Date", manualAptForm.date],
                         ["Time", manualAptForm.time_slot],
                         ["Visit Type", manualAptForm.visit_type],
-                        ["Fee", manualAptForm.fee ? `$${manualAptForm.fee}` : "—"],
+                        ["Fee", manualAptForm.fee ? `${cur}${manualAptForm.fee}` : "—"],
                       ].map(([l,v]) => (
                         <div key={l} className="flex justify-between text-xs">
                           <span className="text-[#A3A3A3]">{l}</span>
