@@ -53,8 +53,19 @@ type Appointment = {
   fee?: number;
   problem_text?: string;
   notes?: string;
+  is_guest?: boolean;
+  guest_name?: string;
+  guest_phone?: string;
   patients?: { id: string; name: string; phone: string };
 };
+
+// Resolve display name/phone for both registered and guest appointments.
+function aptName(a: Appointment): string {
+  return a.patients?.name || a.guest_name || "Walk-in Patient";
+}
+function aptPhone(a: Appointment): string {
+  return a.patients?.phone || a.guest_phone || "";
+}
 
 type Patient = {
   id: string;
@@ -194,7 +205,7 @@ export default function AdminDashboard() {
 
     const { data: apts } = await supabase
       .from("appointments")
-      .select("id, service, date, time_slot, visit_type, status, fee, problem_text, notes, serial_number, patients(id, name, phone)")
+      .select("id, service, date, time_slot, visit_type, status, fee, problem_text, notes, serial_number, is_guest, guest_name, guest_phone, patients(id, name, phone)")
       .eq("doctor_id", doc.id)
       .order("date", { ascending: false });
 
@@ -412,7 +423,7 @@ export default function AdminDashboard() {
     const medRows = (rx.medicines ?? []).filter(m => m.name).map((m, i) =>
       `<tr><td style="padding:7px 10px;border-bottom:1px solid #f0f0f0;color:#666">${i+1}</td><td style="padding:7px 10px;border-bottom:1px solid #f0f0f0;font-weight:600">${m.name}</td><td style="padding:7px 10px;border-bottom:1px solid #f0f0f0">${m.dosage||"—"}</td><td style="padding:7px 10px;border-bottom:1px solid #f0f0f0">${m.frequency||"—"}</td><td style="padding:7px 10px;border-bottom:1px solid #f0f0f0">${m.duration||"—"}</td><td style="padding:7px 10px;border-bottom:1px solid #f0f0f0;color:#555">${m.instructions||"—"}</td></tr>`
     ).join("");
-    w.document.write(`<!DOCTYPE html><html><head><title>Prescription — ${apt.patients?.name}</title>
+    w.document.write(`<!DOCTYPE html><html><head><title>Prescription — ${aptName(apt)}</title>
     <style>
       body{font-family:'Segoe UI',Arial,sans-serif;padding:44px;max-width:720px;margin:auto;color:#1a1a1a;font-size:13px;}
       h1{font-size:20px;font-weight:700;margin:0;color:#111;}
@@ -433,8 +444,8 @@ export default function AdminDashboard() {
     <h1>Dr. ${doctor?.name ?? ""}</h1>
     <h2>${doctor?.specialty ?? ""}${doctor?.hospital ? " · " + doctor.hospital : ""}${doctor?.phone ? " · " + doctor.phone : ""}</h2>
     <hr class="divider"/>
-    <div class="info-row"><span class="label">Patient</span><span class="value">${apt.patients?.name ?? "—"}</span></div>
-    <div class="info-row"><span class="label">Phone</span><span class="value">${apt.patients?.phone ?? "—"}</span></div>
+    <div class="info-row"><span class="label">Patient</span><span class="value">${aptName(apt)}</span></div>
+    <div class="info-row"><span class="label">Phone</span><span class="value">${aptPhone(apt) || "—"}</span></div>
     <div class="info-row"><span class="label">Visit Date</span><span class="value">${apt.date}</span></div>
     <div class="info-row"><span class="label">Service</span><span class="value">${apt.service}</span></div>
     <div class="info-row"><span class="label">Diagnosis</span><span class="value">${rx.diagnosis}</span></div>
@@ -636,10 +647,10 @@ export default function AdminDashboard() {
                       {todayApts.map(apt => (
                         <div key={apt.id} className="px-5 py-3.5 flex items-center gap-3 hover:bg-[rgba(36,36,36,0.03)]">
                           <div className="w-9 h-9 rounded-full bg-[#14967F] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                            {apt.patients?.name?.[0]?.toUpperCase() ?? "P"}
+                            {aptName(apt)[0]?.toUpperCase() ?? "P"}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-[#191919] text-sm truncate">{apt.patients?.name}</p>
+                            <p className="font-semibold text-[#191919] text-sm truncate">{aptName(apt)}</p>
                             <p className="text-xs text-[#A3A3A3]">{apt.service} · {apt.time_slot}</p>
                           </div>
                           <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${statusColor[apt.status] || "bg-gray-100 text-gray-500"}`}>
@@ -707,11 +718,11 @@ export default function AdminDashboard() {
                             <td className="px-5 py-3.5">
                               <div className="flex items-center gap-2">
                                 <div className="w-7 h-7 rounded-full bg-[#14967F] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                                  {apt.patients?.name?.[0]?.toUpperCase() ?? "P"}
+                                  {aptName(apt)[0]?.toUpperCase() ?? "P"}
                                 </div>
                                 <div>
-                                  <p className="font-medium text-[#191919] text-sm">{apt.patients?.name}</p>
-                                  <p className="text-[10px] text-[#A3A3A3]">{apt.patients?.phone}</p>
+                                  <p className="font-medium text-[#191919] text-sm">{aptName(apt)}</p>
+                                  <p className="text-[10px] text-[#A3A3A3]">{aptPhone(apt)}</p>
                                 </div>
                               </div>
                             </td>
@@ -795,11 +806,11 @@ export default function AdminDashboard() {
                             <td className="px-3 sm:px-5 py-3.5">
                               <div className="flex items-center gap-2">
                                 <div className="w-8 h-8 rounded-full bg-[#14967F] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                                  {apt.patients?.name?.[0]?.toUpperCase() ?? "P"}
+                                  {aptName(apt)[0]?.toUpperCase() ?? "P"}
                                 </div>
                                 <div>
-                                  <p className="font-semibold text-[#191919] text-sm">{apt.patients?.name}</p>
-                                  <p className="text-xs text-[#A3A3A3]">{apt.patients?.phone}</p>
+                                  <p className="font-semibold text-[#191919] text-sm">{aptName(apt)}</p>
+                                  <p className="text-xs text-[#A3A3A3]">{aptPhone(apt)}</p>
                                   <p className="text-[10px] text-[#A3A3A3] sm:hidden">{formatDate(apt.date)} · {apt.time_slot}</p>
                                 </div>
                               </div>
@@ -1043,7 +1054,7 @@ export default function AdminDashboard() {
                             <span className="text-white font-bold text-sm">#{String(apt.serial_number ?? 0).padStart(2,"0")}</span>
                           </div>
                           <div className="flex-1">
-                            <p className="font-semibold text-[#191919] text-sm">{apt.patients?.name}</p>
+                            <p className="font-semibold text-[#191919] text-sm">{aptName(apt)}</p>
                             <p className="text-xs text-[#A3A3A3]">{apt.time_slot} · {apt.service}</p>
                           </div>
                           <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusColor[apt.status] || "bg-gray-100 text-gray-500"}`}>
@@ -1080,10 +1091,10 @@ export default function AdminDashboard() {
                       <div className="px-5 py-4 flex items-center justify-between border-b border-gray-100">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-full bg-[#14967F] flex items-center justify-center text-white font-bold text-sm shrink-0">
-                            {apt.patients?.name?.[0]?.toUpperCase() ?? "P"}
+                            {aptName(apt)[0]?.toUpperCase() ?? "P"}
                           </div>
                           <div>
-                            <p className="font-semibold text-[#191919] text-sm">{apt.patients?.name}</p>
+                            <p className="font-semibold text-[#191919] text-sm">{aptName(apt)}</p>
                             <p className="text-xs text-[#A3A3A3]" style={MONO}>{formatDate(apt.date)} · {apt.service} · {apt.time_slot}</p>
                           </div>
                         </div>
@@ -1440,7 +1451,7 @@ export default function AdminDashboard() {
                       <tbody className="divide-y divide-gray-50">
                         {apts.slice(0,30).map(apt => (
                           <tr key={apt.id} className="hover:bg-[rgba(36,36,36,0.03)]">
-                            <td className="px-4 py-3 font-medium text-[#191919]">{apt.patients?.name ?? "Guest"}</td>
+                            <td className="px-4 py-3 font-medium text-[#191919]">{aptName(apt)}</td>
                             <td className="px-4 py-3 text-[#6b7280]">{formatDate(apt.date)}</td>
                             <td className="px-4 py-3 text-[#6b7280]">{apt.time_slot}</td>
                             <td className="px-4 py-3 text-[#6b7280]">{apt.service}</td>
@@ -1529,7 +1540,7 @@ export default function AdminDashboard() {
                               {[...todayApts].sort((a,b) => (a.serial_number??0)-(b.serial_number??0)).map(apt => (
                                 <tr key={apt.id} className="hover:bg-[rgba(36,36,36,0.03)]">
                                   <td className="px-4 py-3"><span className="text-[10px] font-bold text-[#14967F] bg-[#e8f5f2] rounded-lg px-1.5 py-0.5">#{String(apt.serial_number??0).padStart(2,"0")}</span></td>
-                                  <td className="px-4 py-3 font-semibold text-[#191919]">{apt.patients?.name ?? "Guest"}</td>
+                                  <td className="px-4 py-3 font-semibold text-[#191919]">{aptName(apt)}</td>
                                   <td className="px-4 py-3 text-[#6b7280]">{apt.time_slot}</td>
                                   <td className="px-4 py-3 text-[#6b7280]">{apt.service}</td>
                                   <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusColor[apt.status]??"bg-gray-100 text-gray-500"}`}>{statusLabel[apt.status]??apt.status}</span></td>
